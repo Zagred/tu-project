@@ -1,32 +1,17 @@
 pipeline {
-    agent {
-        docker {
-            image 'pacopandev/android-build:latest'
-            args '-u root:root'
-        }
-    }
+    agent any  // Runs on the Jenkins VM
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
-            }
-        }
-
-        stage('Dependencies') {
-            steps {
-                sh "./gradlew dependencies"
-            }
-        }
-
-        stage('Assemble Debug APK') {
-            steps {
-                sh "./gradlew clean assembleDebug"
+                // Pull code from GitHub
+                git 'https://github.com/Zagred/tu-project.git'
             }
         }
 
         stage('Archive APK') {
             steps {
+                // Archive APKs produced by your manual Docker run
                 archiveArtifacts artifacts: 'app/build/outputs/apk/debug/*.apk', fingerprint: true
             }
         }
@@ -34,7 +19,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Build successful. APK is archived."
+            echo "✅ APK archived successfully."
         }
         failure {
             echo "❌ Build failed. Check logs."
