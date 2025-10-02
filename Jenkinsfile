@@ -2,38 +2,26 @@ pipeline {
     agent any
 
     environment {
-        ANSIBLE_CREDENTIALS = "vagrant-key"
         APP_VM = "192.168.56.104"
         REPO_URL = "https://github.com/Zagred/tu-project.git"
         PROJECT_DIR = "/home/vagrant/tu-project/bank-mobile-app"
-
-        NEXUS_USER = 'admin'
-        NEXUS_PASS = 'rdxx12rd'
+        RELEASE_REPO = 'bank-mobile-app-release'
         NEXUSIP = '192.168.56.101'
         NEXUSPORT = '8081'
         NEXUS_LOGIN = 'nexuslogin'
+        SSH_CREDENTIALS = 'vagrant-key'   
     }
 
     stages {
-        stage('Configure App VM with Ansible') {
-            steps {
-                ansiblePlaybook(
-                    playbook: 'ansible/setup-app-vm.yaml',
-                    inventory: 'ansible/inventory.ini',
-                    credentialsId: "${ANSIBLE_CREDENTIALS}"
-                )
-            }
-        }
-
         stage('Build Bank Mobile App') {
             steps {
-                sshagent([ANSIBLE_CREDENTIALS]) {
+                sshagent([SSH_CREDENTIALS]) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no vagrant@${APP_VM} '
-                        cd ${PROJECT_DIR} && \
-                        git pull && \
-                        ./gradlew assembleDebug --no-daemon
-                    '
+                        ssh -o StrictHostKeyChecking=no vagrant@${APP_VM} '
+                            cd ${PROJECT_DIR} && \
+                            git pull && \
+                            ./gradlew assembleDebug --no-daemon
+                        '
                     """
                 }
             }
@@ -45,14 +33,14 @@ pipeline {
                     nexusVersion: 'nexus3',
                     protocol: 'http',
                     nexusUrl: "${NEXUSIP}:${NEXUSPORT}",
-                    groupId: 'com.bank.app',
+                    groupId: 'QA',
                     version: "${env.BUILD_ID}",
-                    repository: "apk-snapshots",
+                    repository: "${RELEASE_REPO}",
                     credentialsId: "${NEXUS_LOGIN}",
                     artifacts: [
                         [artifactId: 'bank-mobile-app',
-                         classifier: 'debug',
-                         file: "${PROJECT_DIR}/app/build/outputs/apk/debug/app-debug.apk",
+                         classifier: '',
+                         file: "${PROJECT_DIR}/build/outputs/apk/debug/app-debug.apk",
                          type: 'apk']
                     ]
                 )
