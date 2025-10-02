@@ -15,10 +15,11 @@ pipeline {
         stage('Configure App VM with Ansible') {
             steps {
                 ansiblePlaybook(
-                    playbook: 'playbooks/app-setup.yml',
-                    inventory: 'inventory/hosts.ini',
+                    playbook: 'ansible/app.yaml',
+                    inventory: 'ansible/inventory.ini',
                     credentialsId: "${ANSIBLE_CREDENTIALS}"
-                )
+            )
+
             }
         }
 
