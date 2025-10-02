@@ -51,6 +51,6 @@ Vagrant.configure("2") do |config|
       vb.memory = "6144"
       vb.cpus = 2
     end
-    
+    vm.vm.provision "shell", path: "userdata/app-setup.sh"
   end
 end
