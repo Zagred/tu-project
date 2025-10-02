@@ -4,7 +4,6 @@ pipeline {
     environment {
         APP_VM = "192.168.56.104"
         PROJECT_DIR = "/home/vagrant/tu-project/bank-mobile-app"
-        SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa"
     }
 
     stages {
