@@ -17,7 +17,7 @@ pipeline {
                 ansiblePlaybook(
                     playbook: 'ansible/app.yaml',
                     inventory: 'ansible/inventory.ini',
-                    extras: '-u vagrant --private-key /home/vagrant/.ssh/id_rsa -o StrictHostKeyChecking=no'
+                    extras: '-u vagrant --private-key /home/vagrant/.ssh/id_rsa --ssh-extra-args="-o StrictHostKeyChecking=no"'
                 )
             }
         }
