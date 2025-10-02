@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        ANSIBLE_CREDENTIALS = "vagrant-key"
+        ANSIBLE_CREDENTIALS = "vagrant-id_rsa"
     }
 
     stages {
