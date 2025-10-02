@@ -3,32 +3,35 @@ pipeline {
 
     environment {
         ANSIBLE_CREDENTIALS = "vagrant-key"
+        APP_VM = "192.168.56.104"
+        REPO_URL = "https://github.com/Zagred/tu-project.git"
+        PROJECT_DIR = "/home/vagrant/tu-project/bank-mobile-app"
+
+        NEXUS_USER = 'admin'
+        NEXUS_PASS = 'rdxx12rd'
+        NEXUSIP = '192.168.56.101'
+        NEXUSPORT = '8081'
+        NEXUS_LOGIN = 'nexuslogin'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Configure App VM with Ansible') {
             steps {
-                git url: 'https://github.com/Zagred/tu-project.git', branch: 'main'
+                ansiblePlaybook(
+                    playbook: 'ansible/setup-app-vm.yaml',
+                    inventory: 'ansible/inventory.ini',
+                    credentialsId: "${ANSIBLE_CREDENTIALS}"
+                )
             }
         }
 
-        stage('Build Bank Mobile App on App VM') {
+        stage('Build Bank Mobile App') {
             steps {
-                sshagent(credentials: ["${ANSIBLE_CREDENTIALS}"]) {
+                sshagent([ANSIBLE_CREDENTIALS]) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no vagrant@192.168.56.104 '
-                        # Set environment variables
-                        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 &&
-                        export ANDROID_HOME=/home/vagrant/Android/Sdk &&
-                        export PATH=\$JAVA_HOME/bin:\$ANDROID_HOME/tools:\$ANDROID_HOME/platform-tools:\$PATH &&
-
-                        # Navigate to the project directory
-                        cd /home/vagrant/tu-project/bank-mobile-app &&
-
-                        # Pull latest code
-                        git pull &&
-
-                        # Build the app using Gradle wrapper
+                    ssh -o StrictHostKeyChecking=no vagrant@${APP_VM} '
+                        cd ${PROJECT_DIR} && \
+                        git pull && \
                         ./gradlew assembleDebug --no-daemon
                     '
                     """
@@ -36,14 +39,23 @@ pipeline {
             }
         }
 
-        stage('Archive APK') {
+        stage('Upload APK to Nexus') {
             steps {
-                sshagent(credentials: ["${ANSIBLE_CREDENTIALS}"]) {
-                    sh """
-                    scp -o StrictHostKeyChecking=no vagrant@192.168.56.104:/home/vagrant/tu-project/bank-mobile-app/app/build/outputs/apk/debug/app-debug.apk ./app-debug.apk
-                    """
-                }
-                archiveArtifacts artifacts: 'app-debug.apk', fingerprint: true
+                nexusArtifactUploader(
+                    nexusVersion: 'nexus3',
+                    protocol: 'http',
+                    nexusUrl: "${NEXUSIP}:${NEXUSPORT}",
+                    groupId: 'com.bank.app',
+                    version: "${env.BUILD_ID}",
+                    repository: "apk-snapshots",
+                    credentialsId: "${NEXUS_LOGIN}",
+                    artifacts: [
+                        [artifactId: 'bank-mobile-app',
+                         classifier: 'debug',
+                         file: "${PROJECT_DIR}/app/build/outputs/apk/debug/app-debug.apk",
+                         type: 'apk']
+                    ]
+                )
             }
         }
     }
