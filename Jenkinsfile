@@ -17,9 +17,8 @@ pipeline {
                 ansiblePlaybook(
                     playbook: 'ansible/app.yaml',
                     inventory: 'ansible/inventory.ini',
-                    credentialsId: "${ANSIBLE_CREDENTIALS}"
-            )
-
+                    extras: '-u vagrant --private-key /home/vagrant/.ssh/id_rsa -o StrictHostKeyChecking=no'
+                )
             }
         }
 
