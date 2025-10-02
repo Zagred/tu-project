@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        ANSIBLE_CREDENTIALS = "vagrant-id_rsa"
+        ANSIBLE_CREDENTIALS = "vagrant-key"
     }
 
     stages {
@@ -12,27 +12,38 @@ pipeline {
             }
         }
 
-        stage('Configure App VM with Ansible') {
-            steps {
-                ansiblePlaybook(
-                    playbook: 'ansible/app.yaml',
-                    inventory: 'ansible/inventory.ini',
-                    extras: '-u vagrant --private-key /home/vagrant/.ssh/id_rsa --ssh-extra-args="-o StrictHostKeyChecking=no"'
-                )
-            }
-        }
-
-        stage('Build Kotlin App') {
+        stage('Build Bank Mobile App on App VM') {
             steps {
                 sshagent(credentials: ["${ANSIBLE_CREDENTIALS}"]) {
                     sh """
                     ssh -o StrictHostKeyChecking=no vagrant@192.168.56.104 '
-                        cd /home/vagrant/tu-project &&
+                        # Set environment variables
+                        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 &&
+                        export ANDROID_HOME=/home/vagrant/Android/Sdk &&
+                        export PATH=\$JAVA_HOME/bin:\$ANDROID_HOME/tools:\$ANDROID_HOME/platform-tools:\$PATH &&
+
+                        # Navigate to the project directory
+                        cd /home/vagrant/tu-project/bank-mobile-app &&
+
+                        # Pull latest code
                         git pull &&
-                        ./gradlew build
+
+                        # Build the app using Gradle wrapper
+                        ./gradlew assembleDebug --no-daemon
                     '
                     """
                 }
+            }
+        }
+
+        stage('Archive APK') {
+            steps {
+                sshagent(credentials: ["${ANSIBLE_CREDENTIALS}"]) {
+                    sh """
+                    scp -o StrictHostKeyChecking=no vagrant@192.168.56.104:/home/vagrant/tu-project/bank-mobile-app/app/build/outputs/apk/debug/app-debug.apk ./app-debug.apk
+                    """
+                }
+                archiveArtifacts artifacts: 'app-debug.apk', fingerprint: true
             }
         }
     }
