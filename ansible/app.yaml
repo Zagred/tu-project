@@ -1,0 +1,67 @@
+---
+- name: Setup Android build environment on App VM
+  hosts: app
+  become: yes
+
+  vars:
+    android_home: /opt/android-sdk
+    java_version: openjdk-17-jdk
+    gradle_version: 8.7
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - "{{ java_version }}"
+          - unzip
+          - wget
+          - curl
+        state: present
+
+    - name: Install Gradle
+      get_url:
+        url: "https://services.gradle.org/distributions/gradle-{{ gradle_version }}-bin.zip"
+        dest: "/tmp/gradle.zip"
+
+    - name: Unpack Gradle
+      unarchive:
+        src: "/tmp/gradle.zip"
+        dest: /opt/
+        remote_src: yes
+
+    - name: Add Gradle to PATH
+      lineinfile:
+        path: /etc/profile.d/gradle.sh
+        line: 'export PATH=$PATH:/opt/gradle-{{ gradle_version }}/bin'
+        create: yes
+
+    - name: Create Android SDK directory
+      file:
+        path: "{{ android_home }}/cmdline-tools"
+        state: directory
+        mode: '0755'
+
+    - name: Download Android command line tools
+      get_url:
+        url: "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+        dest: /tmp/cmdline-tools.zip
+
+    - name: Unpack Android command line tools
+      unarchive:
+        src: /tmp/cmdline-tools.zip
+        dest: "{{ android_home }}/cmdline-tools"
+        remote_src: yes
+
+    - name: Move tools into 'latest'
+      command: mv {{ android_home }}/cmdline-tools/cmdline-tools {{ android_home }}/cmdline-tools/latest
+      args:
+        removes: "{{ android_home }}/cmdline-tools/latest"
+
+    - name: Accept licenses and install Android SDK components
+      shell: |
+        yes | {{ android_home }}/cmdline-tools/latest/bin/sdkmanager --licenses
+        {{ android_home }}/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
