@@ -17,15 +17,18 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'vagrant-login', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh """
-                    sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no $USER@${APP_VM} '
-                        cd ${PROJECT_DIR} && \
-                        git pull && \
-                        ./gradlew assembleDebug --no-daemon
-                    '
+                        sshpass -p "$PASS" ssh -tt -o StrictHostKeyChecking=no $USER@${APP_VM} '
+                            export ANDROID_HOME=\$HOME/Android/Sdk
+                            export PATH=\$ANDROID_HOME/cmdline-tools/latest/bin:\$ANDROID_HOME/platform-tools:\$PATH
+                            cd ${PROJECT_DIR} && \
+                            git pull && \
+                            ./gradlew assembleDebug --no-daemon
+                        '
                     """
                 }
             }
         }
+
     }
 
     post {
