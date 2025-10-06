@@ -4,11 +4,9 @@ pipeline {
     environment {
         APP_VM = "192.168.56.104"
         PROJECT_DIR = "/home/vagrant/tu-project/bank-mobile-app"
-        SSH_KEY = "/var/lib/jenkins/.ssh/id_rsa"
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 git url: 'https://github.com/Zagred/tu-project.git', branch: 'main'
@@ -17,9 +15,9 @@ pipeline {
 
         stage('Build Android App') {
             steps {
-                sshagent (credentials: ['vagrant-key']) {
+                withCredentials([usernamePassword(credentialsId: 'vagrant-login', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no vagrant@${APP_VM} '
+                    sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no $USER@${APP_VM} '
                         cd ${PROJECT_DIR} && \
                         git pull && \
                         ./gradlew assembleDebug --no-daemon
