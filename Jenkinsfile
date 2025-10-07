@@ -4,6 +4,9 @@ pipeline {
     environment {
         APP_VM = "192.168.56.104"
         PROJECT_DIR = "/home/vagrant/tu-project/bank-mobile-app"
+
+        VAGRANT_CREDS = credentials('vagrant-login')
+        NEXUS_CREDS = credentials('nexus-login')
     }
 
     stages {
@@ -15,27 +18,26 @@ pipeline {
 
         stage('Build Android App') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'vagrant-login', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh """
-                        sshpass -p "$PASS" ssh -tt -o StrictHostKeyChecking=no $USER@${APP_VM} "
-                            cd ${PROJECT_DIR} && \
-                            git pull && \
-                            ./gradlew assembleDebug
-                        "
-                    """
-                }
+                sh """
+                    sshpass -p "${VAGRANT_CREDS_PSW}" ssh -tt -o StrictHostKeyChecking=no ${VAGRANT_CREDS_USR}@${APP_VM} "
+                        cd ${PROJECT_DIR} && \
+                        git pull && \
+                        ./gradlew assembleDebug
+                    "
+                """
             }
         }
+
         stage('Publish to Nexus') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'nexus-login', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                    sh """
-                        sshpass -p "$PASS" ssh -tt -o StrictHostKeyChecking=no $USER@${APP_VM} "
-                            cd ${PROJECT_DIR} && \
-                            ./gradlew publish
-                        "
-                    """
-                }
+                sh """
+                    sshpass -p "${VAGRANT_CREDS_PSW}" ssh -tt -o StrictHostKeyChecking=no ${VAGRANT_CREDS_USR}@${APP_VM} "
+                        export NEXUS_USER='${NEXUS_CREDS_USR}' && \
+                        export NEXUS_PASS='${NEXUS_CREDS_PSW}' && \
+                        cd ${PROJECT_DIR} && \
+                        ./gradlew publish
+                    "
+                """
             }
         }
     }
