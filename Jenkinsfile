@@ -49,17 +49,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Clean Old Snapshots') {
-            steps {
-                sh """
-                    echo "Cleaning old snapshots from Nexus repository..."
-                    curl -u $NEXUS_CREDS_USR:$NEXUS_CREDS_PSW -X DELETE \\
-                        "http://192.168.56.101:8081/service/rest/v1/components?repository=app-snapshots&group=com.example.bankapp&name=bank-mobile-app" || true
-                """
-            }
-        }
-
         stage('Publish to Nexus') {
             steps {
                 sh """
