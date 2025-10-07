@@ -7,6 +7,8 @@ pipeline {
 
         VAGRANT_CREDS = credentials('vagrant-login')
         NEXUS_CREDS   = credentials('nexus-login')
+        SONARSERVER   = 'sonarserver'
+        SONAR_TOKEN   = credentials('sonartoken') 
     }
 
     stages {
@@ -34,6 +36,30 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarserver') {
+                    sh """
+                        sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM \\
+                        "cd $PROJECT_DIR && ./gradlew sonarqube \\
+                            -Dsonar.projectKey=bank-mobile-app \\
+                            -Dsonar.host.url=$SONAR_HOST_URL \\
+                            -Dsonar.login=$SONAR_TOKEN"
+                    """
+                }
+            }
+        }
+
+        stage('Clean Old Snapshots') {
+            steps {
+                sh """
+                    echo "Cleaning old snapshots from Nexus repository..."
+                    curl -u $NEXUS_CREDS_USR:$NEXUS_CREDS_PSW -X DELETE \\
+                        "http://192.168.56.101:8081/service/rest/v1/components?repository=app-snapshots&group=com.example.bankapp&name=bank-mobile-app" || true
+                """
+            }
+        }
+
         stage('Publish to Nexus') {
             steps {
                 sh """
@@ -46,7 +72,7 @@ pipeline {
 
     post {
         always {
-            echo 'Build stage finished.'
+            echo '✅ Build and analysis pipeline completed.'
         }
     }
 }
