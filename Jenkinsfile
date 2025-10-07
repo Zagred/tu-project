@@ -5,11 +5,10 @@ pipeline {
         APP_VM = "192.168.56.104"
         PROJECT_DIR = "/home/vagrant/tu-project/bank-mobile-app"
 
-        // These must be created as separate username/password credentials
-        VM_USER = credentials('vagrant-login_USR')
-        VM_PASS = credentials('vagrant-login_PSW')
-        NEXUS_USER = credentials('nexus-login_USR')
-        NEXUS_PASS = credentials('nexus-login_PSW')
+        VAGRANT_CREDS = credentials('vagrant-login')
+        NEXUS_CREDS = credentials('nexus-login')
+        NEXUS_USER="admin"
+        NEXUS_PASS="rdxx12rd"
     }
 
     stages {
@@ -22,7 +21,7 @@ pipeline {
         stage('Build Android App') {
             steps {
                 sh """
-                    sshpass -p "${VM_PASS}" ssh -tt -o StrictHostKeyChecking=no ${VM_USER}@${APP_VM} "
+                    sshpass -p "${VAGRANT_CREDS_PSW}" ssh -tt -o StrictHostKeyChecking=no ${VAGRANT_CREDS_USR}@${APP_VM} "
                         cd ${PROJECT_DIR} && \
                         git pull && \
                         ./gradlew assembleDebug
@@ -34,7 +33,7 @@ pipeline {
         stage('Publish to Nexus') {
             steps {
                 sh """
-                    sshpass -p "${VM_PASS}" ssh -tt -o StrictHostKeyChecking=no ${VM_USER}@${APP_VM} "
+                    sshpass -p "${VAGRANT_CREDS_PSW}" ssh -tt -o StrictHostKeyChecking=no ${VAGRANT_CREDS_USR}@${APP_VM} "
                         export NEXUS_USER='${NEXUS_USER}' && \
                         export NEXUS_PASS='${NEXUS_PASS}' && \
                         cd ${PROJECT_DIR} && \
