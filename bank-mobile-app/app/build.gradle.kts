@@ -73,7 +73,7 @@ publishing {
     repositories {
         maven {
             name = "nexus"
-            url = uri("https://nexus.yourcompany.com/repository/maven-snapshots/")
+            url = uri("http://192.168.56.101:8081/repository/app-snapshots/")
             credentials {
                 username = System.getenv("NEXUS_USER")
                 password = System.getenv("NEXUS_PASS")
