@@ -44,7 +44,7 @@ pipeline {
             steps {
                 sh '''
                     sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM \
-                    "export NEXUS_USER='$NEXUS_CREDS_USR' && export NEXUS_PASS='$NEXUS_CREDS_PSW' && cd $PROJECT_DIR && ./gradlew publish"
+                    "export NEXUS_USER='$NEXUS_CREDS_USR' && export NEXUS_PASS='$NEXUS_CREDS_PSW' && cd $PROJECT_DIR && ./gradlew publish -Dgradle.publish.allowInsecureProtocol=true"
                 '''
             }
         }
