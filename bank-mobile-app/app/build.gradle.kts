@@ -74,6 +74,7 @@ publishing {
         maven {
             name = "nexus"
             url = uri("http://192.168.56.101:8081/repository/app-snapshots/")
+            isAllowInsecureProtocol = true
             credentials {
                 username = System.getenv("NEXUS_USER")
                 password = System.getenv("NEXUS_PASS")
