@@ -5,10 +5,9 @@ pipeline {
         APP_VM = "192.168.56.104"
         PROJECT_DIR = "/home/vagrant/tu-project/bank-mobile-app"
 
-        VAGRANT_USER = credentials('vagrant-login_USR')
-        VAGRANT_PASS = credentials('vagrant-login_PSW')
-        NEXUS_USER   = credentials('nexus-login_USR')
-        NEXUS_PASS   = credentials('nexus-login_PSW')
+        // Use single username/password credentials for each service
+        VAGRANT_CREDS = credentials('vagrant-login')
+        NEXUS_CREDS   = credentials('nexus-login')
 
         NEXUS_VERSION = "nexus3"
         NEXUS_PROTOCOL = "http"
@@ -27,7 +26,7 @@ pipeline {
         stage('Build Android App') {
             steps {
                 sh '''
-                    sshpass -p "$VAGRANT_PASS" ssh -tt -o StrictHostKeyChecking=no $VAGRANT_USER@$APP_VM <<EOF
+                    sshpass -p "$VAGRANT_CREDS_PSW" ssh -tt -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM <<EOF
                         cd $PROJECT_DIR
                         ./gradlew clean assembleDebug
 EOF
@@ -38,7 +37,7 @@ EOF
         stage('Unit Test') {
             steps {
                 sh '''
-                    sshpass -p "$VAGRANT_PASS" ssh -tt -o StrictHostKeyChecking=no $VAGRANT_USER@$APP_VM <<EOF
+                    sshpass -p "$VAGRANT_CREDS_PSW" ssh -tt -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM <<EOF
                         cd $PROJECT_DIR
                         ./gradlew test
 EOF
@@ -48,16 +47,14 @@ EOF
 
         stage('Publish to Nexus') {
             steps {
-                script {
-                    sh '''
-                        sshpass -p "$VAGRANT_PASS" ssh -tt -o StrictHostKeyChecking=no $VAGRANT_USER@$APP_VM <<EOF
-                            export NEXUS_USER="$NEXUS_USER"
-                            export NEXUS_PASS="$NEXUS_PASS"
-                            cd $PROJECT_DIR
-                            ./gradlew publish
+                sh '''
+                    sshpass -p "$VAGRANT_CREDS_PSW" ssh -tt -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM <<EOF
+                        export NEXUS_USER="$NEXUS_CREDS_USR"
+                        export NEXUS_PASS="$NEXUS_CREDS_PSW"
+                        cd $PROJECT_DIR
+                        ./gradlew publish
 EOF
-                    '''
-                }
+                '''
             }
         }
     }
