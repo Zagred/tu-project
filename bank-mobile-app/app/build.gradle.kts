@@ -61,12 +61,12 @@ dependencies {
 
 publishing {
     publications {
-        create<MavenPublication>("release") {
+        create<MavenPublication>("snapshot") {
             groupId = "com.example.bankapp"
             artifactId = "app-mobile"
             version = "1.0.0-SNAPSHOT"
 
-            artifact("$buildDir/outputs/apk/release/app-release.apk")
+            artifact("$buildDir/outputs/apk/debug/app-debug.apk")
         }
     }
 
