@@ -66,7 +66,7 @@ publishing {
             artifactId = "app-mobile"
             version = "1.0.0-SNAPSHOT"
 
-            artifact("$buildDir/outputs/apk/debug/app-debug.apk")
+            artifact("$buildDir/outputs/apk/release/app-release.apk")
         }
     }
 
@@ -74,7 +74,7 @@ publishing {
         maven {
             name = "nexus"
             url = uri("http://192.168.56.101:8081/repository/app-snapshots/")
-            isAllowInsecureProtocol = true
+            setAllowInsecureProtocol(true)
             credentials {
                 username = System.getenv("NEXUS_USER")
                 password = System.getenv("NEXUS_PASS")
