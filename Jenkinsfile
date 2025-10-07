@@ -5,10 +5,16 @@ pipeline {
         APP_VM = "192.168.56.104"
         PROJECT_DIR = "/home/vagrant/tu-project/bank-mobile-app"
 
-        VAGRANT_CREDS = credentials('vagrant-login')
-        NEXUS_CREDS = credentials('nexus-login')
-        NEXUS_USER="admin"
-        NEXUS_PASS="rdxx12rd"
+        VAGRANT_USER = credentials('vagrant-login_USR')
+        VAGRANT_PASS = credentials('vagrant-login_PSW')
+        NEXUS_USER   = credentials('nexus-login_USR')
+        NEXUS_PASS   = credentials('nexus-login_PSW')
+
+        NEXUS_VERSION = "nexus3"
+        NEXUS_PROTOCOL = "http"
+        NEXUS_URL = "192.168.56.101:8081"
+        NEXUS_REPOSITORY = "app-snapshots"
+        ARTVERSION = "${env.BUILD_ID}"
     }
 
     stages {
@@ -20,26 +26,38 @@ pipeline {
 
         stage('Build Android App') {
             steps {
-                sh """
-                    sshpass -p "${VAGRANT_CREDS_PSW}" ssh -tt -o StrictHostKeyChecking=no ${VAGRANT_CREDS_USR}@${APP_VM} "
-                        cd ${PROJECT_DIR} && \
-                        git pull && \
-                        ./gradlew assembleDebug
-                    "
-                """
+                sh '''
+                    sshpass -p "$VAGRANT_PASS" ssh -tt -o StrictHostKeyChecking=no $VAGRANT_USER@$APP_VM <<EOF
+                        cd $PROJECT_DIR
+                        ./gradlew clean assembleDebug
+EOF
+                '''
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                sh '''
+                    sshpass -p "$VAGRANT_PASS" ssh -tt -o StrictHostKeyChecking=no $VAGRANT_USER@$APP_VM <<EOF
+                        cd $PROJECT_DIR
+                        ./gradlew test
+EOF
+                '''
             }
         }
 
         stage('Publish to Nexus') {
             steps {
-                sh """
-                    sshpass -p "${VAGRANT_CREDS_PSW}" ssh -tt -o StrictHostKeyChecking=no ${VAGRANT_CREDS_USR}@${APP_VM} "
-                        export NEXUS_USER='${NEXUS_USER}' && \
-                        export NEXUS_PASS='${NEXUS_PASS}' && \
-                        cd ${PROJECT_DIR} && \
-                        ./gradlew publish
-                    "
-                """
+                script {
+                    sh '''
+                        sshpass -p "$VAGRANT_PASS" ssh -tt -o StrictHostKeyChecking=no $VAGRANT_USER@$APP_VM <<EOF
+                            export NEXUS_USER="$NEXUS_USER"
+                            export NEXUS_PASS="$NEXUS_PASS"
+                            cd $PROJECT_DIR
+                            ./gradlew publish
+EOF
+                    '''
+                }
             }
         }
     }
