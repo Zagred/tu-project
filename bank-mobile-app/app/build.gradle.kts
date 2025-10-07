@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("maven-publish")
 }
 
 android {
@@ -56,4 +57,27 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("release") {
+            groupId = "com.example.bankapp"
+            artifactId = "app-mobile"
+            version = "1.0.0-SNAPSHOT"
+
+            artifact("$buildDir/outputs/apk/debug/app-debug.apk")
+        }
+    }
+
+    repositories {
+        maven {
+            name = "nexus"
+            url = uri("https://nexus.yourcompany.com/repository/maven-snapshots/")
+            credentials {
+                username = System.getenv("NEXUS_USER")
+                password = System.getenv("NEXUS_PASS")
+            }
+        }
+    }
 }

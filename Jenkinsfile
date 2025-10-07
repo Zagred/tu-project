@@ -26,7 +26,18 @@ pipeline {
                 }
             }
         }
-
+        stage('Publish to Nexus') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'nexus-login', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh """
+                        sshpass -p "$PASS" ssh -tt -o StrictHostKeyChecking=no $USER@${APP_VM} "
+                            cd ${PROJECT_DIR} && \
+                            ./gradlew publish
+                        "
+                    """
+                }
+            }
+        }
     }
 
     post {
