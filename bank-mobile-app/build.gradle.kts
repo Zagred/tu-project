@@ -5,7 +5,6 @@ plugins {
 
     id("org.sonarqube") version "4.4.1.3373"
 }
-
 sonarqube {
     properties {
         property("sonar.projectKey", "bank-mobile-app")
@@ -13,16 +12,13 @@ sonarqube {
         property("sonar.host.url", "http://192.168.56.102")
         property("sonar.login", System.getenv("SONAR_TOKEN"))
         property("sonar.sourceEncoding", "UTF-8")
-        property("sonar.language", "kotlin")
 
-        property("sonar.sources", listOf("app/src/main/java"))
-        property("sonar.tests", listOf("app/src/test/java"))
+        property("sonar.sources", "app/src/main/java")
+        property("sonar.tests", "app/src/test/java")
 
-        property("sonar.gradle.skipCompile", true)
         property("sonar.kotlin.ignoreBuildScripts", true)
 
-        // property("sonar.junit.reportPaths", listOf("app/build/test-results/testDebugUnitTest"))
-        // property("sonar.androidLint.reportPaths", listOf("app/build/reports/lint-results-debug.xml"))
+        property("sonar.gradle.skipCompile", true)
     }
 }
 
