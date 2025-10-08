@@ -15,14 +15,12 @@ sonarqube {
         property("sonar.sourceEncoding", "UTF-8")
         property("sonar.language", "kotlin")
 
-        // Only include directories that exist
         property("sonar.sources", listOf("app/src/main/java"))
         property("sonar.tests", listOf("app/src/test/java"))
 
-        // Skip implicit compilation (prevents deprecated warning)
         property("sonar.gradle.skipCompile", true)
+        property("sonar.kotlin.ignoreBuildScripts", true)
 
-        // Comment out optional reports until they exist
         // property("sonar.junit.reportPaths", listOf("app/build/test-results/testDebugUnitTest"))
         // property("sonar.androidLint.reportPaths", listOf("app/build/reports/lint-results-debug.xml"))
     }
