@@ -38,13 +38,16 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarserver') {
+                withSonarQubeEnv("${SONARQUBE_ENV}") {
                     sh """
-                        sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM \\
-                        "cd $PROJECT_DIR && ./gradlew sonarqube \\
-                            -Dsonar.projectKey=bank-mobile-app \\
-                            -Dsonar.host.url=$SONAR_HOST_URL \\
-                            -Dsonar.login=$SONAR_TOKEN"
+                        sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM '
+                            cd $PROJECT_DIR &&
+                            ./gradlew sonarqube \
+                                -Dsonar.projectKey=bank-mobile-app \
+                                -Dsonar.projectName="Bank Mobile App" \
+                                -Dsonar.host.url=$SONAR_HOST_URL \
+                                -Dsonar.login=$SONAR_AUTH_TOKEN
+                        '
                     """
                 }
             }

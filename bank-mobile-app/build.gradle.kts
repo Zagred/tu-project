@@ -14,7 +14,10 @@ sonarqube {
         property("sonar.login", System.getenv("SONAR_TOKEN")) // or CLI
         property("sonar.sourceEncoding", "UTF-8")
         property("sonar.language", "kotlin")
-        property("sonar.sources", "app/src/main/java,app/src/main/kotlin")
-        property("sonar.tests", "app/src/test/java,app/src/test/kotlin")
+
+        property("sonar.sources", listOf("app/src/main/java", "app/src/main/kotlin"))
+        property("sonar.tests", listOf("app/src/test/java", "app/src/test/kotlin"))
+
+        property("sonar.gradle.skipCompile", true)
     }
 }
