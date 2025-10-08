@@ -13,12 +13,16 @@ sonarqube {
         property("sonar.login", System.getenv("SONAR_TOKEN"))
         property("sonar.sourceEncoding", "UTF-8")
 
-        property("sonar.sources", "app/src/main/java")
-        property("sonar.tests", "app/src/test/java")
+        // Correctly pass sources as a list
+        property("sonar.sources", listOf("app/src/main/java"))
+        property("sonar.tests", listOf("app/src/test/java"))
 
+        // Skip Kotlin build scripts
         property("sonar.kotlin.ignoreBuildScripts", true)
 
+        // Optional: skip compile step if needed
         property("sonar.gradle.skipCompile", true)
     }
 }
+
 
