@@ -36,7 +36,22 @@ pipeline {
             }
         }
 
-
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE_ENV}") {
+                    sh """
+                        sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM '
+                            cd $PROJECT_DIR &&
+                            ./gradlew sonarqube \
+                                -Dsonar.projectKey=bank-mobile-app \
+                                -Dsonar.projectName="Bank Mobile App" \
+                                -Dsonar.host.url=$SONAR_HOST_URL \
+                                -Dsonar.login=$SONAR_AUTH_TOKEN
+                        '
+                    """
+                }
+            }
+        }
         stage('Publish to Nexus') {
             steps {
                 sh """
