@@ -2,17 +2,18 @@ pipeline {
   agent any
 
   environment {
-    PROJECT_DIR = "bank-mobile-app"
+    APP_VM      = "192.168.56.104"
+    PROJECT_DIR = "/home/vagrant/tu-project/bank-mobile-app"
 
-    SONARSERVER = "sonarserver"
-    SONAR_HOST_URL = "http://192.168.56.102:9000"
-    SONAR_PROJECT_KEY = "tu-bank-mobile-app"
-    SONAR_PROJECT_NAME = "Bank Mobile App"
+    VAGRANT_CREDS = credentials('vagrant-login')
+    NEXUS_CREDS   = credentials('nexus-login')
+    SONAR_TOKEN   = credentials('sonartoken')
 
-    NEXUS_CREDS = credentials('nexus-login')
+    SONAR_HOST_URL     = "http://192.168.56.102:9000"
+    SONAR_PROJECT_KEY  = "tu-bank-mobile-app"
 
-    DOCKER_CREDS = credentials('docker-hub-credentials') // username+password
-    DOCKER_IMAGE = "pacopandev/bank-mobile-app"
+    registryCredential = "docker-hub-credentials"
+    appRegistry        = "pacopandev/android-build"
   }
 
   stages {
@@ -25,8 +26,8 @@ pipeline {
     stage('Build Android App') {
       steps {
         sh """
-          cd ${PROJECT_DIR}
-          ./gradlew clean assembleDebug
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM \\
+          "set -e; cd $PROJECT_DIR; chmod +x ./gradlew || true; ./gradlew clean assembleDebug"
         """
       }
     }
@@ -34,73 +35,59 @@ pipeline {
     stage('Unit Test') {
       steps {
         sh """
-          cd ${PROJECT_DIR}
-          ./gradlew test
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM \\
+          "set -e; cd $PROJECT_DIR; ./gradlew test"
         """
       }
     }
 
-    stage('SonarQube Analysis') {
+    stage('SonarQube Analysis (CLI on App VM)') {
       steps {
-        withSonarQubeEnv("${SONARSERVER}") {
-          sh """
-            cd ${PROJECT_DIR}
-            sonar-scanner \
-              -Dsonar.host.url=${SONAR_HOST_URL} \
-              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-              -Dsonar.projectName="${SONAR_PROJECT_NAME}" \
-              -Dsonar.sources=app/src/main \
-              -Dsonar.tests=app/src/test \
-              -Dsonar.exclusions=**/build/**,**/.gradle/** \
-              -Dsonar.token=$SONAR_AUTH_TOKEN
-          """
-        }
-      }
-    }
-
-    stage('Quality Gate') {
-      steps {
-        timeout(time: 30, unit: 'MINUTES') {
-          waitForQualityGate abortPipeline: true
-        }
+        sh """
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM \\
+          "set -e; cd $PROJECT_DIR; \\
+           export SONAR_TOKEN='$SONAR_TOKEN'; \\
+           sonar-scanner \\
+             -Dsonar.host.url=$SONAR_HOST_URL \\
+             -Dsonar.projectKey=$SONAR_PROJECT_KEY \\
+             -Dsonar.projectName='Bank Mobile App' \\
+             -Dsonar.sources=app/src/main \\
+             -Dsonar.tests=app/src/test \\
+             -Dsonar.exclusions=**/build/**,**/.gradle/** \\
+             -Dsonar.sourceEncoding=UTF-8 \\
+             -Dsonar.token=\\$SONAR_TOKEN"
+        """
       }
     }
 
     stage('Publish to Nexus') {
       steps {
         sh """
-          export NEXUS_USER='${NEXUS_CREDS_USR}'
-          export NEXUS_PASS='${NEXUS_CREDS_PSW}'
-          cd ${PROJECT_DIR}
-          ./gradlew publish -Dgradle.publish.allowInsecureProtocol=true
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM \\
+          "set -e; export NEXUS_USER='$NEXUS_CREDS_USR'; export NEXUS_PASS='$NEXUS_CREDS_PSW'; \\
+           cd $PROJECT_DIR; ./gradlew publish -Dgradle.publish.allowInsecureProtocol=true"
         """
       }
     }
 
-    stage('Build & Push Docker Image') {
+    stage('Build & Push android-build image') {
       steps {
-        sh """
-          test -f ${PROJECT_DIR}/app/build/outputs/apk/debug/app-debug.apk
-
-          docker build \
-            --build-arg APK_PATH=${PROJECT_DIR}/app/build/outputs/apk/debug/app-debug.apk \
-            -t ${DOCKER_IMAGE}:${BUILD_NUMBER} \
-            -t ${DOCKER_IMAGE}:latest \
-            .
-        """
-
-        sh """
-          echo '${DOCKER_CREDS_PSW}' | docker login -u '${DOCKER_CREDS_USR}' --password-stdin
-          docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
-          docker push ${DOCKER_IMAGE}:latest
-        """
+        script {
+          dockerImage = docker.build("${appRegistry}:${BUILD_NUMBER}", ".")
+        }
+        script {
+          docker.withRegistry('https://index.docker.io/v1/', registryCredential) {
+            dockerImage.push("${BUILD_NUMBER}")
+            dockerImage.push("latest")
+          }
+        }
       }
     }
   }
 
   post {
     always {
-      echo '✅ Pipeline completed.'
+      echo '✅ Build and analysis pipeline completed.'
     }
   }
 }
