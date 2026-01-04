@@ -3,7 +3,7 @@ pipeline {
 
   environment {
     APP_VM      = "192.168.56.104"
-    PROJECT_DIR = "/home/vagrant/tu-project/bank-mobile-app"
+    PROJECT_DIR = "/home/vagrant/tu-project/BankApp"
 
     VAGRANT_CREDS = credentials('vagrant-login')
     NEXUS_CREDS   = credentials('nexus-login')
