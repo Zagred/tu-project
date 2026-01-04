@@ -26,26 +26,33 @@ pipeline {
     stage('Build Android App') {
       steps {
         sh """
-          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM \\
-          "set -e; cd $PROJECT_DIR; chmod +x ./gradlew || true; ./gradlew clean assembleDebug"
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $VAGRANT_CREDS_USR@$APP_VM \\
+          "set -e; cd $PROJECT_DIR; \\
+           export ANDROID_SDK_ROOT=/opt/android-sdk; export ANDROID_HOME=/opt/android-sdk; \\
+           chmod +x ./gradlew || true; ./gradlew clean assembleDebug"
         """
       }
     }
+
 
     stage('Unit Test') {
       steps {
         sh """
-          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM \\
-          "set -e; cd $PROJECT_DIR; ./gradlew test"
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $VAGRANT_CREDS_USR@$APP_VM \\
+          "set -e; cd $PROJECT_DIR; \\
+           export ANDROID_SDK_ROOT=/opt/android-sdk; export ANDROID_HOME=/opt/android-sdk; \\
+           ./gradlew test"
         """
       }
     }
 
+
     stage('SonarQube Analysis (CLI on App VM)') {
       steps {
         sh """
-          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM \\
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $VAGRANT_CREDS_USR@$APP_VM \\
           "set -e; cd $PROJECT_DIR; \\
+           export ANDROID_SDK_ROOT=/opt/android-sdk; export ANDROID_HOME=/opt/android-sdk; \\
            export SONAR_TOKEN='$SONAR_TOKEN'; \\
            sonar-scanner \\
              -Dsonar.host.url=$SONAR_HOST_URL \\
@@ -60,15 +67,19 @@ pipeline {
       }
     }
 
+
     stage('Publish to Nexus') {
       steps {
         sh """
-          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no $VAGRANT_CREDS_USR@$APP_VM \\
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $VAGRANT_CREDS_USR@$APP_VM \\
           "set -e; export NEXUS_USER='$NEXUS_CREDS_USR'; export NEXUS_PASS='$NEXUS_CREDS_PSW'; \\
-           cd $PROJECT_DIR; ./gradlew publish -Dgradle.publish.allowInsecureProtocol=true"
+           cd $PROJECT_DIR; \\
+           export ANDROID_SDK_ROOT=/opt/android-sdk; export ANDROID_HOME=/opt/android-sdk; \\
+           ./gradlew publish -Dgradle.publish.allowInsecureProtocol=true"
         """
       }
     }
+
 
     stage('Build & Push android-build image') {
       steps {
