@@ -12,6 +12,27 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BankApp">
         <activity
+            android:name=".AnalyticsPage"
+            android:exported="false" />
+        <activity
+            android:name=".OffersPage"
+            android:exported="false" />
+        <activity
+            android:name=".PaymentsPage"
+            android:exported="false" />
+        <activity
+            android:name=".TransfersPage"
+            android:exported="false" />
+        <activity
+            android:name=".ProductsPage"
+            android:exported="false" />
+        <activity
+            android:name=".RegisterPage"
+            android:exported="false" />
+        <activity
+            android:name=".LoginPage"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
