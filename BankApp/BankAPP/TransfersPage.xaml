@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BankAPP.TransfersPage"
+             Title="Transfers">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="18">
+
+            <Label Text="Transfers"
+                   FontSize="30"
+                   FontAttributes="Bold" />
+
+            <!-- TRANSFER FORM -->
+            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
+                <VerticalStackLayout Spacing="16">
+
+                    <Label Text="Make Transfer"
+                           FontSize="22"
+                           FontAttributes="Bold" />
+
+                    <Picker x:Name="FromAccountPicker"
+                            Title="Select source account"
+                            ItemDisplayBinding="{Binding DisplayText}" />
+
+                    <Entry x:Name="ToIbanEntry"
+                           Placeholder="Recipient IBAN" />
+
+                    <Entry x:Name="AmountEntry"
+                           Placeholder="Amount"
+                           Keyboard="Numeric" />
+
+                    <Entry x:Name="DescriptionEntry"
+                           Placeholder="Description" />
+
+                    <Button Text="Transfer"
+                            HeightRequest="50"
+                            CornerRadius="12"
+                            Clicked="OnTransferClicked" />
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- RECENT TRANSFERS -->
+            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
+                <VerticalStackLayout Spacing="12">
+
+                    <Label Text="Recent Transfers"
+                           FontSize="22"
+                           FontAttributes="Bold" />
+
+                    <CollectionView x:Name="TransfersCollection"
+                                    SelectionMode="None">
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Frame Padding="12" Margin="0,5" CornerRadius="14" BorderColor="LightGray">
+                                    <VerticalStackLayout Spacing="6">
+
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <VerticalStackLayout>
+                                                <Label Text="{Binding MovementTypeDisplay}"
+                                                       FontAttributes="Bold"
+                                                       FontSize="18"/>
+                                                <Label Text="{Binding Category}"
+                                                       FontSize="12"
+                                                       Opacity="0.7" />
+                                            </VerticalStackLayout>
+
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding AmountText}"
+                                                   FontSize="16">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding IsExpense}"
+                                                                 Value="True">
+                                                        <Setter Property="TextColor" Value="Red" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding IsExpense}"
+                                                                 Value="False">
+                                                        <Setter Property="TextColor" Value="Green" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </Grid>
+
+                                        <Label Text="{Binding Description}" />
+                                        <Label Text="{Binding Status}" Opacity="0.8" />
+                                        <Label Text="{Binding Currency}" Opacity="0.8" />
+                                        <Label Text="{Binding ReferenceNumber}" Opacity="0.8" />
+                                        <Label Text="{Binding MovementDateTime, StringFormat='{0:dd.MM.yyyy HH:mm}'}"
+                                               Opacity="0.8" />
+
+                                    </VerticalStackLayout>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+
+                    </CollectionView>
+
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

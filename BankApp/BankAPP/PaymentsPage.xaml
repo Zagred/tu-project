@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BankAPP.PaymentsPage"
+             Title="Payments">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="18">
+
+            <Label Text="Payments"
+                   FontSize="30"
+                   FontAttributes="Bold" />
+
+            <!-- SPENDING CHART -->
+            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Spending last 7 days" FontSize="22" FontAttributes="Bold" />
+                    <CollectionView x:Name="ChartCollectionView"
+                                    ItemsLayout="HorizontalList"
+                                    SelectionMode="None"
+                                    HeightRequest="170">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout HorizontalOptions="Center" Spacing="8">
+                                    <BoxView HeightRequest="{Binding Height}" WidthRequest="24" Color="#4C8CFF" CornerRadius="12" />
+                                    <Label Text="{Binding DayLabel}" FontSize="12" HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding AmountText}" FontSize="12" HorizontalTextAlignment="Center" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- PAYMENTS SUMMARY -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+
+                <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Total Spent" FontAttributes="Bold" FontSize="16"/>
+                        <Label x:Name="TotalSpentLabel" Text="0.00" FontSize="24" TextColor="Red"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Total Income" FontAttributes="Bold" FontSize="16"/>
+                        <Label x:Name="TotalIncomeLabel" Text="0.00" FontSize="24" TextColor="Green"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+            </Grid>
+
+            <!-- TRANSFER WARNING -->
+            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Transfers only"
+                           FontSize="22"
+                           FontAttributes="Bold" />
+                    <Label Text="Direct transaction creation is disabled for regular users. Use the Transfers page to submit transfer requests. Admin POS terminal actions are handled separately." />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- PAYMENTS LIST -->
+            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
+                <VerticalStackLayout Spacing="12">
+
+                    <Label Text="All Payments"
+                           FontSize="22"
+                           FontAttributes="Bold" />
+
+                    <Picker x:Name="FilterPicker"
+                            Title="Filter by type"
+                            SelectedIndexChanged="OnFilterChanged">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>all</x:String>
+                                <x:String>card_payment</x:String>
+                                <x:String>transfer</x:String>
+                                <x:String>cash_withdrawal</x:String>
+                                <x:String>deposit</x:String>
+                                <x:String>fee</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+
+                    <CollectionView x:Name="PaymentsCollection"
+                                    SelectionMode="None">
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Frame Padding="12" Margin="0,5" CornerRadius="14" BorderColor="LightGray">
+                                    <VerticalStackLayout Spacing="6">
+
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <VerticalStackLayout>
+                                                <Label Text="{Binding MovementTypeDisplay}"
+                                                       FontAttributes="Bold"
+                                                       FontSize="18"/>
+                                                <Label Text="{Binding Category}"
+                                                       FontSize="12"
+                                                       Opacity="0.7" />
+                                            </VerticalStackLayout>
+
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding AmountText}"
+                                                   FontSize="16">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding IsExpense}"
+                                                                 Value="True">
+                                                        <Setter Property="TextColor" Value="Red" />
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label"
+                                                                 Binding="{Binding IsExpense}"
+                                                                 Value="False">
+                                                        <Setter Property="TextColor" Value="Green" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </Grid>
+
+                                        <Label Text="{Binding Description}" />
+                                        <Label Text="{Binding Status}" Opacity="0.8" />
+                                        <Label Text="{Binding Currency}" Opacity="0.8" />
+                                        <Label Text="{Binding ReferenceNumber}" Opacity="0.8" />
+                                        <Label Text="{Binding MovementDateTime, StringFormat='{0:dd.MM.yyyy HH:mm}'}"
+                                               Opacity="0.8" />
+
+                                    </VerticalStackLayout>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+
+                    </CollectionView>
+
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

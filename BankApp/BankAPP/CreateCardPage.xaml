@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BankAPP.CreateCardPage"
+             Title="Create Card">
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="16">
+            <Label Text="Create card for selected account" FontAttributes="Bold" FontSize="24" />
+
+            <Label Text="User" FontAttributes="Bold" />
+            <Label x:Name="UserLabel" />
+
+            <Label Text="Account" FontAttributes="Bold" />
+            <Label x:Name="AccountLabel" />
+
+            <Label Text="Card type" FontAttributes="Bold" />
+            <Picker x:Name="CardTypePicker" Title="Select card type" />
+
+            <Button Text="Create card" Clicked="OnCreateCardClicked" />
+            <Label x:Name="CardStatusLabel" FontSize="14" TextColor="Green" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

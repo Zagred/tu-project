@@ -1,0 +1,266 @@
+@page "/payments"
+@inject ApiAuthService AuthService
+@inject AccountApiService AccountService
+@inject MovementApiService MovementService
+
+<PageTitle>Payments</PageTitle>
+
+@if (AuthService.CurrentUser == null)
+{
+    <section class="empty-state">
+        <h1>You are not logged in</h1>
+        <a class="btn btn-primary" href="/login">Go to login</a>
+    </section>
+}
+else
+{
+    <div class="page-heading">
+        <div>
+            <h1>Payments</h1>
+            <p class="text-muted">All payments with filters by month, category, type, account and status.</p>
+        </div>
+        <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
+    </div>
+
+    <section class="metrics">
+        <div class="metric"><span>Total Spent</span><strong class="amount-negative">@totalSpent.ToString("F2") BGN</strong></div>
+        <div class="metric"><span>Total Income</span><strong class="amount-positive">@totalIncome.ToString("F2") BGN</strong></div>
+        <div class="metric"><span>Visible payments</span><strong>@filteredPayments.Count</strong></div>
+        <div class="metric"><span>All payments</span><strong>@payments.Count</strong></div>
+    </section>
+
+    <section class="tool-panel">
+        <h2>Filters</h2>
+        <div class="filter-grid">
+            <label>
+                Month
+                <input class="form-control" type="month" value="@selectedMonth" @onchange="OnMonthChanged" />
+            </label>
+            <label>
+                Category
+                <select class="form-select" @bind="selectedCategory" @bind:after="ApplyFilters">
+                    <option value="all">All</option>
+                    <option value="expense">Expense</option>
+                    <option value="income">Income</option>
+                </select>
+            </label>
+            <label>
+                Type
+                <select class="form-select" @bind="selectedType" @bind:after="ApplyFilters">
+                    <option value="@MovementTypes.All">All</option>
+                    <option value="@MovementTypes.CardPayment">Card payment</option>
+                    <option value="@MovementTypes.Transfer">Transfer</option>
+                    <option value="@MovementTypes.CashWithdrawal">Cash withdrawal</option>
+                    <option value="@MovementTypes.Deposit">Deposit</option>
+                    <option value="@MovementTypes.Fee">Fee</option>
+                </select>
+            </label>
+            <label>
+                Account
+                <select class="form-select" @bind="selectedAccountId" @bind:after="ApplyFilters">
+                    <option value="0">All</option>
+                    @foreach (var account in accounts)
+                    {
+                        <option value="@account.Id">@account.Iban</option>
+                    }
+                </select>
+            </label>
+            <label>
+                Status
+                <select class="form-select" @bind="selectedStatus" @bind:after="ApplyFilters">
+                    <option value="all">All</option>
+                    @foreach (var status in statuses)
+                    {
+                        <option value="@status">@status</option>
+                    }
+                </select>
+            </label>
+            <label>
+                Search
+                <input class="form-control" @bind="searchText" @bind:after="ApplyFilters" placeholder="Description or reference" />
+            </label>
+        </div>
+        <button class="btn btn-outline-secondary" type="button" @onclick="ClearFilters">Clear filters</button>
+    </section>
+
+    <section class="tool-panel">
+        <h2>Spending last 7 days</h2>
+        <div class="chart-bars">
+            @foreach (var bar in chartBars)
+            {
+                <div class="chart-bar">
+                    <div class="chart-fill" style="height:@bar.Height.ToString("F0")px"></div>
+                    <span>@bar.DayLabel</span>
+                    <small>@bar.AmountText</small>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="tool-panel">
+        <div class="table-toolbar">
+            <h2>All Payments</h2>
+            <span class="text-muted">@filteredPayments.Count result(s)</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Reference</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var payment in filteredPayments)
+                    {
+                        <tr>
+                            <td>@payment.MovementDateTime.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@payment.MovementTypeDisplay</td>
+                            <td>@payment.Category</td>
+                            <td>@payment.Description</td>
+                            <td>@payment.Status</td>
+                            <td>@payment.ReferenceNumber</td>
+                            <td class="text-end @(payment.IsExpense ? "amount-negative" : "amount-positive")">@payment.AmountText @payment.Currency</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+
+@code {
+    private List<AccountDto> accounts = new();
+    private List<Movement> payments = new();
+    private List<Movement> filteredPayments = new();
+    private List<string> statuses = new();
+    private List<ChartBar> chartBars = new();
+    private string selectedMonth = "";
+    private string selectedCategory = "all";
+    private string selectedType = MovementTypes.All;
+    private string selectedStatus = MovementTypes.All;
+    private string searchText = "";
+    private int selectedAccountId;
+    private decimal totalSpent;
+    private decimal totalIncome;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.InitializeAsync();
+
+        if (AuthService.CurrentUser != null)
+            await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        accounts = await AccountService.GetMyAccountsAsync();
+        payments = await MovementService.GetMyMovementsAsync();
+        statuses = payments
+            .Select(p => p.Status)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Distinct()
+            .OrderBy(s => s)
+            .ToList();
+
+        chartBars = BuildChartData(payments);
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<Movement> query = payments;
+
+        if (!string.IsNullOrWhiteSpace(selectedMonth) &&
+            DateTime.TryParse($"{selectedMonth}-01", out var month))
+        {
+            query = query.Where(p =>
+                p.MovementDateTime.Year == month.Year &&
+                p.MovementDateTime.Month == month.Month);
+        }
+
+        if (selectedCategory == "expense")
+            query = query.Where(p => p.IsExpense);
+        else if (selectedCategory == "income")
+            query = query.Where(p => !p.IsExpense);
+
+        if (selectedType != MovementTypes.All)
+            query = query.Where(p => p.MovementType == selectedType);
+
+        if (selectedAccountId != 0)
+            query = query.Where(p => p.AccountId == selectedAccountId);
+
+        if (selectedStatus != MovementTypes.All)
+            query = query.Where(p => p.Status == selectedStatus);
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            query = query.Where(p =>
+                (p.Description ?? string.Empty).Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                p.ReferenceNumber.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+        }
+
+        filteredPayments = query
+            .OrderByDescending(p => p.MovementDateTime)
+            .ToList();
+
+        totalSpent = filteredPayments
+            .Where(p => p.IsExpense)
+            .Sum(p => p.Amount);
+
+        totalIncome = filteredPayments
+            .Where(p => !p.IsExpense)
+            .Sum(p => p.Amount);
+    }
+
+    private void OnMonthChanged(ChangeEventArgs args)
+    {
+        selectedMonth = args.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void ClearFilters()
+    {
+        selectedMonth = "";
+        selectedCategory = "all";
+        selectedType = MovementTypes.All;
+        selectedStatus = MovementTypes.All;
+        selectedAccountId = 0;
+        searchText = "";
+        ApplyFilters();
+    }
+
+    private static List<ChartBar> BuildChartData(List<Movement> movements)
+    {
+        var today = DateTime.Today;
+        var lastSevenDays = Enumerable.Range(0, 7)
+            .Select(i => today.AddDays(i - 6))
+            .Select(day => new
+            {
+                Day = day,
+                Amount = movements
+                    .Where(m => MovementTypes.IsExpense(m.MovementType))
+                    .Where(m => m.MovementDateTime.Date == day.Date)
+                    .Sum(m => m.Amount)
+            })
+            .ToList();
+
+        var maxAmount = lastSevenDays.Max(x => x.Amount);
+        if (maxAmount <= 0) maxAmount = 1;
+
+        return lastSevenDays
+            .Select(x => new ChartBar(
+                x.Day.ToString("dd"),
+                x.Amount > 0 ? x.Amount.ToString("F0") : "0",
+                Math.Max(10, (double)x.Amount / (double)maxAmount * 130)))
+            .ToList();
+    }
+
+    private sealed record ChartBar(string DayLabel, string AmountText, double Height);
+}

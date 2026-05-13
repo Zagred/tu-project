@@ -1,0 +1,83 @@
+@inject ApiAuthService AuthService
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">BankWeb</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                Home
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/accounts">
+                Accounts
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/transfers">
+                Transfers
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/payments">
+                Payments
+            </NavLink>
+        </div>
+
+        @if (AuthService.IsAdmin)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/admin">
+                    Admin
+                </NavLink>
+            </div>
+        }
+
+        @if (AuthService.CurrentUser == null)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/login">
+                    Login
+                </NavLink>
+            </div>
+        }
+        else
+        {
+            <div class="nav-item px-3 nav-user">
+                <span>@AuthService.CurrentUser.User.Username</span>
+                <button class="btn btn-sm btn-outline-light" type="button" @onclick="Logout">Logout</button>
+            </div>
+        }
+    </nav>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        AuthService.Changed += StateHasChanged;
+        await AuthService.InitializeAsync();
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login");
+    }
+
+    public void Dispose()
+    {
+        AuthService.Changed -= StateHasChanged;
+    }
+}

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BankAPP.RegisterPage"
+             Title="Register">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30" Spacing="20">
+
+            <Label Text="Create Account"
+                   FontSize="34"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <Frame Padding="20" CornerRadius="18" BorderColor="LightGray">
+                <VerticalStackLayout Spacing="16">
+
+                    <Entry x:Name="NameEntry"
+                           Placeholder="Full name" />
+
+                    <Entry x:Name="UsernameEntry"
+                           Placeholder="Username" />
+
+                    <Entry x:Name="EmailEntry"
+                           Placeholder="Email"
+                           Keyboard="Email" />
+
+                    <Entry x:Name="EgnEntry"
+                           Placeholder="EGN"
+                           Keyboard="Numeric"
+                           MaxLength="10" />
+
+                    <Entry x:Name="PasswordEntry"
+                           Placeholder="Password"
+                           IsPassword="True" />
+
+                    <Button Text="Create Account"
+                            HeightRequest="50"
+                            CornerRadius="12"
+                            Clicked="OnRegisterClicked" />
+
+                    <Button Text="Back to Login"
+                            HeightRequest="45"
+                            CornerRadius="12"
+                            Clicked="OnGoToLoginClicked" />
+
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

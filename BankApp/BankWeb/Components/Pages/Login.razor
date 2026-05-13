@@ -1,0 +1,60 @@
+@page "/login"
+@inject ApiAuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Login</PageTitle>
+
+<section class="auth-panel">
+    <div>
+        <h1>BankWeb</h1>
+        <p class="text-muted">Sign in to manage accounts, transfers, cards and POS activity.</p>
+    </div>
+
+    <div class="form-grid">
+        <label>
+            Username
+            <input class="form-control" @bind="username" />
+        </label>
+
+        <label>
+            Password
+            <input class="form-control" type="password" @bind="password" />
+        </label>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-primary" type="button" @onclick="HandleLogin">Login</button>
+        <a class="btn btn-outline-secondary" href="/register">Register</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <p class="alert alert-danger">@errorMessage</p>
+    }
+</section>
+
+@code {
+    private string username = "";
+    private string password = "";
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.InitializeAsync();
+    }
+
+    private async Task HandleLogin()
+    {
+        errorMessage = "";
+
+        var success = await AuthService.LoginAsync(username, password);
+
+        if (!success)
+        {
+            errorMessage = "Invalid username or password.";
+            return;
+        }
+
+        Navigation.NavigateTo("/accounts");
+    }
+}

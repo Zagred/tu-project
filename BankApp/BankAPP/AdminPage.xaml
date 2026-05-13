@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BankAPP.AdminPage"
+             Title="Admin">
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="16">
+            <Label Text="Admin Dashboard" FontAttributes="Bold" FontSize="24" />
+
+            <Frame BorderColor="#cccccc" CornerRadius="12" Padding="12">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="All bank accounts" FontAttributes="Bold" />
+                    <CollectionView x:Name="AccountsCollection" SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Frame BorderColor="#888" CornerRadius="10" Padding="10" Margin="0,4">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="{Binding OwnerName}" FontAttributes="Bold" />
+                                        <Label Text="{Binding Username}" FontSize="Small" TextColor="#555" />
+                                        <Label Text="IBAN: {Binding Iban}" FontSize="Small" />
+                                        <Label Text="Balance: {Binding Balance, StringFormat='{}{0:C2}'}" FontSize="Small" />
+                                        <Label Text="Status: {Binding Status}" FontSize="Small" />
+                                        <Label Text="Role: {Binding Role}" FontSize="Small" />
+                                    </VerticalStackLayout>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame BorderColor="#cccccc" CornerRadius="12" Padding="12">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Select user and account" FontAttributes="Bold" />
+                    <Picker x:Name="UserPicker" Title="Select user" SelectedIndexChanged="OnUserChanged" />
+                    <Picker x:Name="AccountPicker" Title="Select account" ItemDisplayBinding="{Binding DisplayText}" SelectedIndexChanged="OnAccountChanged" />
+                    <Label x:Name="SelectedAccountBalanceLabel" Text="Balance:" FontSize="Small" TextColor="#333" />
+                    <Button Text="Create card for this account" Clicked="OnOpenCreateCardWindowClicked" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame BorderColor="#cccccc" CornerRadius="12" Padding="12">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Create POS transaction" FontAttributes="Bold" />
+                    <Picker x:Name="CardPicker" Title="Select card" ItemDisplayBinding="{Binding DisplayText}" />
+                    <Picker x:Name="MerchantPicker" Title="Select merchant" ItemDisplayBinding="{Binding MerchantName}" SelectedIndexChanged="OnMerchantChanged" />
+                    <Picker x:Name="LocationPicker" Title="Select location" ItemDisplayBinding="{Binding DisplayText}" />
+                    <Entry x:Name="AmountEntry" Keyboard="Numeric" Placeholder="Amount" />
+                    <Button Text="Create POS payment" Clicked="OnCreatePosPaymentClicked" />
+                    <Label x:Name="StatusLabel" TextColor="#007700" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame BorderColor="#cccccc" CornerRadius="12" Padding="12">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Pending transfer approvals" FontAttributes="Bold" />
+                    <CollectionView x:Name="PendingTransfersCollection" SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Frame BorderColor="#ff9800" CornerRadius="10" Padding="10" Margin="0,4">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="{Binding Description}" FontAttributes="Bold" FontSize="Small" />
+                                        <Label Text="{Binding FromAccount, StringFormat='From: {0}'}" FontSize="12" />
+                                        <Label Text="{Binding Amount, StringFormat='{}{0:F2}'}" FontSize="12" />
+                                        <Label Text="{Binding MovementDateTime, StringFormat='{0:g}'}" FontSize="10" TextColor="#666" />
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Button Text="Approve" Padding="8" FontSize="12" Clicked="OnApproveTransferClicked" CommandParameter="{Binding MovementId}" />
+                                            <Button Text="Reject" Padding="8" FontSize="12" BackgroundColor="#ff5252" Clicked="OnRejectTransferClicked" CommandParameter="{Binding MovementId}" />
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,185 @@
+@page "/transfers"
+@inject ApiAuthService AuthService
+@inject AccountApiService AccountService
+@inject MovementApiService MovementService
+@inject TransferApiService TransferService
+
+<PageTitle>Transfers</PageTitle>
+
+@if (AuthService.CurrentUser == null)
+{
+    <section class="empty-state">
+        <h1>You are not logged in</h1>
+        <a class="btn btn-primary" href="/login">Go to login</a>
+    </section>
+}
+else
+{
+    <div class="page-heading">
+        <div>
+            <h1>Transfers</h1>
+            <p class="text-muted">Submit transfers for admin approval and review transfer history.</p>
+        </div>
+        <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
+    </div>
+
+    <section class="split-layout">
+        <div class="tool-panel">
+            <h2>New transfer</h2>
+            <div class="form-grid">
+                <label>
+                    From account
+                    <select class="form-select" @bind="fromAccountId">
+                        @foreach (var account in accounts)
+                        {
+                            <option value="@account.Id">@account.DisplayText</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Recipient IBAN
+                    <input class="form-control" @bind="toIban" />
+                </label>
+                <label>
+                    Amount
+                    <input class="form-control" type="number" step="0.01" @bind="amount" />
+                </label>
+                <label>
+                    Description
+                    <input class="form-control" @bind="description" />
+                </label>
+            </div>
+            <button class="btn btn-primary" type="button" @onclick="SubmitTransferAsync">Submit transfer</button>
+
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <p class="alert @messageClass">@message</p>
+            }
+        </div>
+
+        <div>
+            <h2>Transfer history</h2>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var transfer in transfers)
+                        {
+                            <tr>
+                                <td>@transfer.MovementDateTime.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@transfer.Description</td>
+                                <td>@transfer.Status</td>
+                                <td class="text-end">@transfer.AmountText @transfer.Currency</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+}
+
+@code {
+    private List<AccountDto> accounts = new();
+    private List<Movement> transfers = new();
+    private int fromAccountId;
+    private string toIban = "";
+    private decimal amount;
+    private string description = "";
+    private string message = "";
+    private string messageClass = "alert-success";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.InitializeAsync();
+
+        if (AuthService.CurrentUser != null)
+            await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        accounts = await AccountService.GetMyAccountsAsync();
+        if (fromAccountId == 0 && accounts.Count > 0)
+            fromAccountId = accounts[0].Id;
+
+        transfers = await MovementService.GetMovementsByUserAndTypeAsync(MovementTypes.Transfer);
+    }
+
+    private async Task SubmitTransferAsync()
+    {
+        message = "";
+        var selectedAccount = accounts.FirstOrDefault(a => a.Id == fromAccountId);
+        if (selectedAccount == null)
+        {
+            SetError("Please select source account.");
+            return;
+        }
+
+        var iban = toIban.Trim();
+        if (string.IsNullOrWhiteSpace(iban))
+        {
+            SetError("Please enter recipient IBAN.");
+            return;
+        }
+
+        if (string.Equals(iban, selectedAccount.Iban, StringComparison.OrdinalIgnoreCase))
+        {
+            SetError("Recipient IBAN cannot be the same as the source account.");
+            return;
+        }
+
+        if (amount <= 0)
+        {
+            SetError("Invalid amount.");
+            return;
+        }
+
+        if (selectedAccount.Balance < amount)
+        {
+            SetError($"Insufficient funds. Available balance: {selectedAccount.Balance:F2}");
+            return;
+        }
+
+        var toAccount = await AccountService.GetAccountByIbanAsync(iban);
+        if (toAccount == null)
+        {
+            SetError("IBAN not found.");
+            return;
+        }
+
+        var success = await TransferService.TransferAsync(new TransferRequest
+        {
+            FromAccountId = selectedAccount.Id,
+            ToAccountId = toAccount.Id,
+            Amount = amount,
+            Description = description.Trim()
+        });
+
+        if (!success)
+        {
+            SetError("Transfer failed.");
+            return;
+        }
+
+        message = "Transfer submitted for admin approval.";
+        messageClass = "alert-success";
+        toIban = "";
+        amount = 0;
+        description = "";
+        await LoadDataAsync();
+    }
+
+    private void SetError(string text)
+    {
+        message = text;
+        messageClass = "alert-danger";
+    }
+}

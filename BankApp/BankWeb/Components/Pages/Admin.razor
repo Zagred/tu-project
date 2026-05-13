@@ -1,0 +1,339 @@
+@page "/admin"
+@inject ApiAuthService AuthService
+@inject AdminApiService AdminService
+
+<PageTitle>Admin</PageTitle>
+
+@if (AuthService.CurrentUser == null)
+{
+    <section class="empty-state">
+        <h1>You are not logged in</h1>
+        <a class="btn btn-primary" href="/login">Go to login</a>
+    </section>
+}
+else if (!AuthService.IsAdmin)
+{
+    <section class="empty-state">
+        <h1>Access denied</h1>
+        <p class="text-muted">This page is only available for the admin user.</p>
+    </section>
+}
+else
+{
+    <div class="page-heading">
+        <div>
+            <h1>Admin</h1>
+            <p class="text-muted">Manage accounts, cards, POS payments and pending transfers.</p>
+        </div>
+        <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p class="alert @messageClass">@message</p>
+    }
+
+    <section class="split-layout">
+        <div class="tool-panel">
+            <h2>Create card</h2>
+            <div class="form-grid">
+                <label>
+                    User
+                    <select class="form-select" @bind="selectedUser" @bind:after="UpdateAccountSelection">
+                        @foreach (var user in users)
+                        {
+                            <option value="@user">@user</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Account
+                    <select class="form-select" @bind="selectedAccountId" @bind:after="UpdateCardSelection">
+                        @foreach (var account in selectedUserAccounts)
+                        {
+                            <option value="@account.AccountId">@account.DisplayText</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Card type
+                    <select class="form-select" @bind="cardType">
+                        <option value="Debit">Debit</option>
+                        <option value="Credit">Credit</option>
+                    </select>
+                </label>
+            </div>
+            <button class="btn btn-primary" type="button" @onclick="CreateCardAsync">Create card</button>
+        </div>
+
+        <div class="tool-panel">
+            <h2>POS payment</h2>
+            <div class="form-grid">
+                <label>
+                    Card
+                    <select class="form-select" @bind="selectedCardId">
+                        @foreach (var card in selectedAccountCards)
+                        {
+                            <option value="@card.CardId">@card.DisplayText</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Merchant
+                    <select class="form-select" @bind="selectedMerchantId" @bind:after="LoadLocationsAsync">
+                        @foreach (var merchant in merchants)
+                        {
+                            <option value="@merchant.MerchantId">@merchant.MerchantName (@merchant.MerchantCategory)</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Location
+                    <select class="form-select" @bind="selectedLocationId">
+                        @foreach (var location in locations)
+                        {
+                            <option value="@location.LocationId">@location.DisplayText</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Amount
+                    <input class="form-control" type="number" step="0.01" @bind="posAmount" />
+                </label>
+            </div>
+            <button class="btn btn-primary" type="button" @onclick="CreatePosPaymentAsync">Create POS payment</button>
+        </div>
+    </section>
+
+    <section class="split-layout">
+        <div>
+            <h2>Pending transfers</h2>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>From account</th>
+                            <th>Description</th>
+                            <th class="text-end">Amount</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var transfer in pendingTransfers)
+                        {
+                            <tr>
+                                <td>@transfer.MovementDateTime.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@transfer.FromAccount</td>
+                                <td>@transfer.Description</td>
+                                <td class="text-end">@transfer.Amount.ToString("F2") @transfer.Currency</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-success" type="button" @onclick="() => ApproveTransferAsync(transfer.MovementId)">Approve</button>
+                                    <button class="btn btn-sm btn-outline-danger" type="button" @onclick="() => RejectTransferAsync(transfer.MovementId)">Reject</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div>
+            <h2>Accounts</h2>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>IBAN</th>
+                            <th>Role</th>
+                            <th class="text-end">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var account in accounts)
+                        {
+                            <tr>
+                                <td>@account.Username</td>
+                                <td>@account.Iban</td>
+                                <td>@account.Role</td>
+                                <td class="text-end">@account.Balance.ToString("F2") @account.Currency</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+}
+
+@code {
+    private List<AdminAccountDto> accounts = new();
+    private List<AdminCardDto> cards = new();
+    private List<AdminMerchantDto> merchants = new();
+    private List<AdminLocationDto> locations = new();
+    private List<PendingTransferDto> pendingTransfers = new();
+    private List<string> users = new();
+    private List<AdminAccountDto> selectedUserAccounts = new();
+    private List<AdminCardDto> selectedAccountCards = new();
+    private string selectedUser = "";
+    private int selectedAccountId;
+    private int selectedCardId;
+    private int selectedMerchantId;
+    private int selectedLocationId;
+    private string cardType = "Debit";
+    private decimal posAmount;
+    private string message = "";
+    private string messageClass = "alert-success";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.InitializeAsync();
+
+        if (AuthService.IsAdmin)
+            await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        accounts = await AdminService.GetAllAccountsAsync();
+        cards = await AdminService.GetUserCardsAsync();
+        merchants = await AdminService.GetMerchantsAsync();
+        pendingTransfers = await AdminService.GetPendingTransfersAsync();
+
+        users = accounts.Select(a => a.Username).Distinct().OrderBy(u => u).ToList();
+        if (string.IsNullOrWhiteSpace(selectedUser) && users.Count > 0)
+            selectedUser = users[0];
+
+        UpdateAccountSelection();
+
+        if (selectedMerchantId == 0 && merchants.Count > 0)
+            selectedMerchantId = merchants[0].MerchantId;
+
+        await LoadLocationsAsync();
+    }
+
+    private void UpdateAccountSelection()
+    {
+        selectedUserAccounts = accounts
+            .Where(a => a.Username == selectedUser)
+            .OrderBy(a => a.Iban)
+            .ToList();
+
+        if (!selectedUserAccounts.Any(a => a.AccountId == selectedAccountId))
+            selectedAccountId = selectedUserAccounts.FirstOrDefault()?.AccountId ?? 0;
+
+        UpdateCardSelection();
+    }
+
+    private void UpdateCardSelection()
+    {
+        selectedAccountCards = cards
+            .Where(c => c.AccountId == selectedAccountId)
+            .OrderBy(c => c.MaskedCardNumber)
+            .ToList();
+
+        if (!selectedAccountCards.Any(c => c.CardId == selectedCardId))
+            selectedCardId = selectedAccountCards.FirstOrDefault()?.CardId ?? 0;
+    }
+
+    private async Task LoadLocationsAsync()
+    {
+        locations = selectedMerchantId == 0
+            ? new List<AdminLocationDto>()
+            : await AdminService.GetLocationsByMerchantAsync(selectedMerchantId);
+
+        if (!locations.Any(l => l.LocationId == selectedLocationId))
+            selectedLocationId = locations.FirstOrDefault()?.LocationId ?? 0;
+    }
+
+    private async Task CreateCardAsync()
+    {
+        message = "";
+        if (selectedAccountId == 0)
+        {
+            SetError("Please select an account.");
+            return;
+        }
+
+        var card = await AdminService.CreateCardAsync(new CreateCardRequest
+        {
+            AccountId = selectedAccountId,
+            CardType = cardType
+        });
+
+        if (card == null)
+        {
+            SetError("Failed to create card.");
+            return;
+        }
+
+        message = $"Card created: {card.DisplayText}";
+        messageClass = "alert-success";
+        await LoadDataAsync();
+    }
+
+    private async Task CreatePosPaymentAsync()
+    {
+        message = "";
+        if (selectedCardId == 0)
+        {
+            SetError("Please select a card.");
+            return;
+        }
+
+        if (selectedLocationId == 0)
+        {
+            SetError("Please select a location.");
+            return;
+        }
+
+        if (posAmount <= 0)
+        {
+            SetError("Please enter a valid amount.");
+            return;
+        }
+
+        var (success, errorMessage) = await AdminService.CreatePosTransactionAsync(new PosTransactionRequest
+        {
+            CardId = selectedCardId,
+            LocationId = selectedLocationId,
+            Amount = posAmount
+        });
+
+        if (!success)
+        {
+            SetError($"Failed: {errorMessage}");
+            return;
+        }
+
+        message = "POS transaction created successfully.";
+        messageClass = "alert-success";
+        posAmount = 0;
+        await LoadDataAsync();
+    }
+
+    private async Task ApproveTransferAsync(int movementId)
+    {
+        message = await AdminService.ApproveTransferAsync(movementId)
+            ? "Transfer approved successfully."
+            : "Failed to approve transfer.";
+        messageClass = message.StartsWith("Failed", StringComparison.Ordinal) ? "alert-danger" : "alert-success";
+        await LoadDataAsync();
+    }
+
+    private async Task RejectTransferAsync(int movementId)
+    {
+        message = await AdminService.RejectTransferAsync(movementId)
+            ? "Transfer rejected successfully."
+            : "Failed to reject transfer.";
+        messageClass = message.StartsWith("Failed", StringComparison.Ordinal) ? "alert-danger" : "alert-success";
+        await LoadDataAsync();
+    }
+
+    private void SetError(string text)
+    {
+        message = text;
+        messageClass = "alert-danger";
+    }
+}

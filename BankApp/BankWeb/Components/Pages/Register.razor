@@ -1,0 +1,76 @@
+@page "/register"
+@inject ApiAuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Register</PageTitle>
+
+<section class="auth-panel">
+    <h1>Create account</h1>
+
+    <div class="form-grid two">
+        <label>
+            Name
+            <input class="form-control" @bind="request.Name" />
+        </label>
+        <label>
+            Username
+            <input class="form-control" @bind="request.Username" />
+        </label>
+        <label>
+            Email
+            <input class="form-control" type="email" @bind="request.Email" />
+        </label>
+        <label>
+            EGN
+            <input class="form-control" @bind="request.Egn" />
+        </label>
+        <label>
+            Password
+            <input class="form-control" type="password" @bind="request.Password" />
+        </label>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-primary" type="button" @onclick="RegisterAsync">Create</button>
+        <a class="btn btn-outline-secondary" href="/login">Back to login</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p class="alert @messageClass">@message</p>
+    }
+</section>
+
+@code {
+    private RegisterRequest request = new();
+    private string message = "";
+    private string messageClass = "alert-danger";
+
+    private async Task RegisterAsync()
+    {
+        message = "";
+
+        if (string.IsNullOrWhiteSpace(request.Name) ||
+            string.IsNullOrWhiteSpace(request.Username) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.Egn) ||
+            string.IsNullOrWhiteSpace(request.Password))
+        {
+            message = "Please fill all fields.";
+            messageClass = "alert-danger";
+            return;
+        }
+
+        var success = await AuthService.RegisterAsync(request);
+        if (!success)
+        {
+            message = "Could not create account. Username, email or EGN may already exist.";
+            messageClass = "alert-danger";
+            return;
+        }
+
+        message = "Account created successfully.";
+        messageClass = "alert-success";
+        Navigation.NavigateTo("/login");
+    }
+}

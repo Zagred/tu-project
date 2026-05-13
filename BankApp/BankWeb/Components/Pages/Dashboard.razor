@@ -1,0 +1,145 @@
+@page "/dashboard"
+@inject ApiAuthService AuthService
+@inject AccountApiService AccountService
+@inject MovementApiService MovementService
+
+<PageTitle>Dashboard</PageTitle>
+
+@if (AuthService.CurrentUser == null)
+{
+    <section class="empty-state">
+        <h1>You are not logged in</h1>
+        <a class="btn btn-primary" href="/login">Go to login</a>
+    </section>
+}
+else
+{
+    <div class="page-heading">
+        <div>
+            <h1>Bank Dashboard</h1>
+            <p class="text-muted">Welcome, @AuthService.CurrentUser.User.Username!</p>
+        </div>
+        <div class="actions">
+            <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
+            <button class="btn btn-primary" type="button" @onclick="CreateAccountAsync">+ New</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p class="alert @messageClass">@message</p>
+    }
+
+    <section class="metrics">
+        <div class="metric"><span>Total balance</span><strong>@totalBalance.ToString("F2") BGN</strong><small>@accounts.Count account(s)</small></div>
+        <div class="metric"><span>Income</span><strong>@totalCredit.ToString("F2") BGN</strong></div>
+        <div class="metric"><span>Spent</span><strong>@totalDebit.ToString("F2") BGN</strong></div>
+        <div class="metric"><span>Transfers</span><strong>@transferCount</strong></div>
+    </section>
+
+    <section class="split-layout">
+        <div>
+            <h2>Accounts</h2>
+            <div class="item-list">
+                @foreach (var account in accounts)
+                {
+                    <article class="item-card">
+                        <strong>@account.Iban</strong>
+                        <span>@account.Balance.ToString("F2") @account.Currency</span>
+                        <small>@account.Role</small>
+                    </article>
+                }
+            </div>
+        </div>
+
+        <div>
+            <div class="table-toolbar">
+                <h2>Payments</h2>
+                <select class="form-select" @bind="selectedFilter" @bind:after="LoadMovementsAsync">
+                    <option value="@MovementTypes.All">All</option>
+                    <option value="@MovementTypes.Deposit">Deposit</option>
+                    <option value="@MovementTypes.Transfer">Transfer</option>
+                    <option value="@MovementTypes.CardPayment">Card payment</option>
+                    <option value="@MovementTypes.CashWithdrawal">Cash withdrawal</option>
+                    <option value="@MovementTypes.Fee">Fee</option>
+                </select>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var movement in movements)
+                        {
+                            <tr>
+                                <td>@movement.MovementDateTime.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@movement.MovementTypeDisplay</td>
+                                <td>@movement.Description</td>
+                                <td>@movement.Status</td>
+                                <td class="text-end">@movement.AmountText @movement.Currency</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+}
+
+@code {
+    private List<AccountDto> accounts = new();
+    private List<Movement> movements = new();
+    private string selectedFilter = MovementTypes.All;
+    private decimal totalBalance;
+    private decimal totalCredit;
+    private decimal totalDebit;
+    private int transferCount;
+    private string message = "";
+    private string messageClass = "alert-success";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.InitializeAsync();
+
+        if (AuthService.CurrentUser != null)
+            await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        message = "";
+        accounts = await AccountService.GetMyAccountsAsync();
+        await LoadMovementsAsync();
+    }
+
+    private async Task LoadMovementsAsync()
+    {
+        movements = await MovementService.GetMovementsByUserAndTypeAsync(selectedFilter);
+        totalBalance = accounts.Sum(a => a.Balance);
+        totalDebit = movements.Where(m => MovementTypes.IsExpense(m.MovementType)).Sum(m => m.Amount);
+        totalCredit = movements.Where(m => MovementTypes.IsIncome(m.MovementType)).Sum(m => m.Amount);
+        transferCount = movements.Count(m => m.MovementType == MovementTypes.Transfer);
+    }
+
+    private async Task CreateAccountAsync()
+    {
+        var account = await AccountService.CreateAccountAsync();
+        if (account == null)
+        {
+            message = "Failed to create account.";
+            messageClass = "alert-danger";
+            return;
+        }
+
+        message = $"Account created: {account.Iban}";
+        messageClass = "alert-success";
+        await LoadDataAsync();
+    }
+}

@@ -1,0 +1,100 @@
+@page "/accounts"
+@inject ApiAuthService AuthService
+@inject AccountApiService AccountService
+@inject MovementApiService MovementService
+
+<PageTitle>Accounts</PageTitle>
+
+@if (AuthService.CurrentUser == null)
+{
+    <section class="empty-state">
+        <h1>You are not logged in</h1>
+        <a class="btn btn-primary" href="/login">Go to login</a>
+    </section>
+}
+else
+{
+    <div class="page-heading">
+        <div>
+            <h1>My Accounts</h1>
+            <p class="text-muted">Welcome, @AuthService.CurrentUser.User.Username!</p>
+        </div>
+        <div class="actions">
+            <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
+            <button class="btn btn-primary" type="button" @onclick="CreateAccountAsync">+ New</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p class="alert @messageClass">@message</p>
+    }
+
+    <section class="metrics">
+        <div class="metric"><span>Balance</span><strong>@totalBalance.ToString("F2") BGN</strong></div>
+        <div class="metric"><span>Income</span><strong>@totalCredit.ToString("F2") BGN</strong></div>
+        <div class="metric"><span>Expense</span><strong>@totalDebit.ToString("F2") BGN</strong></div>
+        <div class="metric"><span>Accounts</span><strong>@accounts.Count</strong></div>
+    </section>
+
+    <section class="tool-panel">
+        <div class="table-toolbar">
+            <h2>Accounts</h2>
+            <a class="btn btn-outline-primary" href="/transfers">Transfer</a>
+        </div>
+
+        <div class="item-list">
+            @foreach (var account in accounts)
+            {
+                <article class="item-card">
+                    <strong>@account.Iban</strong>
+                    <span>Balance: @account.Balance.ToString("F2") @account.Currency</span>
+                    <small>@account.Role</small>
+                </article>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    private List<AccountDto> accounts = new();
+    private decimal totalBalance;
+    private decimal totalCredit;
+    private decimal totalDebit;
+    private string message = "";
+    private string messageClass = "alert-success";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.InitializeAsync();
+
+        if (AuthService.CurrentUser != null)
+            await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        message = "";
+        accounts = await AccountService.GetMyAccountsAsync();
+        var movements = await MovementService.GetMyMovementsAsync();
+
+        totalBalance = accounts.Sum(a => a.Balance);
+        totalCredit = movements.Where(m => MovementTypes.IsIncome(m.MovementType)).Sum(m => m.Amount);
+        totalDebit = movements.Where(m => MovementTypes.IsExpense(m.MovementType)).Sum(m => m.Amount);
+    }
+
+    private async Task CreateAccountAsync()
+    {
+        var account = await AccountService.CreateAccountAsync();
+        if (account == null)
+        {
+            message = "Failed to create account.";
+            messageClass = "alert-danger";
+            return;
+        }
+
+        message = $"Account created: {account.Iban}";
+        messageClass = "alert-success";
+        await LoadDataAsync();
+    }
+}
