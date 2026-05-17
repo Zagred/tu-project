@@ -115,25 +115,37 @@ pipeline {
       steps {
         sh '''
           set -e
-          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" "
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
+            "CONFIGURATION='$CONFIGURATION' ANDROID_TFM='$ANDROID_TFM' NEXUS_URL='$NEXUS_URL' NEXUS_REPOSITORY='$NEXUS_REPOSITORY' BUILD_NUMBER='$BUILD_NUMBER' NEXUS_USER='$NEXUS_CREDS_USR' NEXUS_PASS='$NEXUS_CREDS_PSW' bash -s" <<'REMOTE_SCRIPT'
             set -e
-            cd '$PROJECT_DIR'
+            cd /home/vagrant/tu-project/BankApp
 
-            APK=\$(find 'BankAPP/bin/$CONFIGURATION/$ANDROID_TFM' -maxdepth 1 -name '*Signed.apk' | head -n 1)
-            if [ -z \"\$APK\" ]; then
-              APK=\$(find 'BankAPP/bin/$CONFIGURATION/$ANDROID_TFM' -maxdepth 1 -name '*.apk' | head -n 1)
-            fi
+            APK_DIR="BankAPP/bin/$CONFIGURATION/$ANDROID_TFM"
+            echo "Looking for APK in $APK_DIR"
+            ls -la "$APK_DIR" || true
 
-            if [ -z \"\$APK\" ]; then
+            APK=""
+            for candidate in "$APK_DIR"/*Signed.apk "$APK_DIR"/*.apk; do
+              if [ -f "$candidate" ]; then
+                APK="$candidate"
+                break
+              fi
+            done
+
+            if [ -z "$APK" ]; then
               echo 'No APK found to publish.'
               exit 1
             fi
 
+            FILE_NAME="$(basename "$APK")"
+            TARGET_URL="$NEXUS_URL/repository/$NEXUS_REPOSITORY/$BUILD_NUMBER/$FILE_NAME"
+
+            echo "Uploading $APK to Nexus"
             curl -fsS \
-              -u '$NEXUS_CREDS_USR:$NEXUS_CREDS_PSW' \
-              --upload-file \"\$APK\" \
-              '$NEXUS_URL/repository/$NEXUS_REPOSITORY/$BUILD_NUMBER/'\$(basename \"\$APK\")
-          "
+              -u "$NEXUS_USER:$NEXUS_PASS" \
+              --upload-file "$APK" \
+              "$TARGET_URL"
+REMOTE_SCRIPT
         '''
       }
     }
