@@ -1,0 +1,7 @@
+.vagrant/
+*.tgz
+*.tar.gz
+*.log
+
+userdata/id_rsa
+userdata/id_rsa.pub
