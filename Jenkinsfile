@@ -8,7 +8,7 @@ pipeline {
     APP_VM      = '192.168.56.104'
     REMOTE_ROOT = '/home/vagrant/tu-project'
     PROJECT_DIR = '/home/vagrant/tu-project/BankAPP'
-    SSH_OPTS    = '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+    SSH_OPTS    = '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o PreferredAuthentications=password -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1'
 
     CONFIGURATION = 'Debug'
     ANDROID_TFM   = 'net10.0-android'
@@ -28,6 +28,23 @@ pipeline {
     stage('Checkout') {
       steps {
         git url: 'https://github.com/Zagred/tu-project.git', branch: 'main'
+      }
+    }
+
+    stage('Test SSH to App VM') {
+      steps {
+        sh '''
+          set -e
+          echo "Testing SSH from Jenkins to $APP_VM as $VAGRANT_CREDS_USR"
+          command -v sshpass
+          command -v ssh
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" '
+            set -e
+            echo "SSH OK"
+            hostname
+            whoami
+          '
+        '''
       }
     }
 
