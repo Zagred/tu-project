@@ -7,7 +7,7 @@ pipeline {
 
     APP_VM      = '192.168.56.104'
     REMOTE_ROOT = '/home/vagrant/tu-project'
-    PROJECT_DIR = '/home/vagrant/tu-project/BankAPP'
+    PROJECT_DIR = '/home/vagrant/tu-project/BankApp'
     SSH_OPTS    = '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o PreferredAuthentications=password -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1'
 
     CONFIGURATION = 'Debug'
