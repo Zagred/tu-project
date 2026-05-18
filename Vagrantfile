@@ -48,4 +48,15 @@ Vagrant.configure("2") do |config|
     end
     vm.vm.provision "shell", path: "userdata/app-setup.sh"
   end
+
+  # --- VM5: Database ---
+  config.vm.define "db" do |vm|
+    vm.vm.box = BOX_NAME
+    vm.vm.network "private_network", ip: "192.168.56.105"
+    vm.vm.provider "virtualbox" do |vb|
+      vb.memory = "3072"
+      vb.cpus = 2
+    end
+    vm.vm.provision "shell", path: "userdata/db-setup.sh"
+  end
 end
