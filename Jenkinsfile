@@ -5,16 +5,19 @@ pipeline {
     REPO_URL    = 'https://github.com/Zagred/tu-project.git'
     REPO_BRANCH = 'main'
 
-    APP_VM      = '192.168.56.104'
-    REMOTE_ROOT = '/home/vagrant/tu-project'
-    PROJECT_DIR = '/home/vagrant/tu-project/BankApp'
-    SSH_OPTS    = '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o PreferredAuthentications=password -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1'
+    APP_VM       = '192.168.56.104'
+    REMOTE_ROOT  = '/home/vagrant/tu-project'
+    PROJECT_DIR  = '/home/vagrant/tu-project/BankApp'
+    PUBLISH_ROOT = '/tmp/bankapp-publish'
+    SSH_OPTS     = '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o PreferredAuthentications=password -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1'
 
-    CONFIGURATION = 'Debug'
-    ANDROID_TFM   = 'net10.0-android'
+    CONFIGURATION = 'Release'
+
+    API_URL = 'http://192.168.56.104:7083'
+    WEB_URL = 'http://192.168.56.104:5000'
 
     SONAR_HOST_URL    = 'http://192.168.56.102:9000'
-    SONAR_PROJECT_KEY = 'tu-bank-mobile-app'
+    SONAR_PROJECT_KEY = 'tu-bank-web-api'
 
     NEXUS_URL        = 'http://192.168.56.101:8081'
     NEXUS_REPOSITORY = 'android-apps'
@@ -31,38 +34,33 @@ pipeline {
       }
     }
 
-    stage('Test SSH to App VM') {
+    stage('Update App VM Source') {
       steps {
         sh '''
           set -e
-          echo "Testing SSH from Jenkins to $APP_VM as $VAGRANT_CREDS_USR"
-          command -v sshpass
-          command -v ssh
-          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" '
-            set -e
-            echo "SSH OK"
-            hostname
-            whoami
-          '
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
+            "REPO_BRANCH='$REPO_BRANCH' REMOTE_ROOT='$REMOTE_ROOT' bash -s" <<'REMOTE_SCRIPT'
+set -e
+cd "$REMOTE_ROOT"
+git fetch origin "$REPO_BRANCH"
+git reset --hard "origin/$REPO_BRANCH"
+git clean -fdx
+REMOTE_SCRIPT
         '''
       }
     }
 
-    stage('Prepare App VM') {
+    stage('Restore') {
       steps {
         sh '''
           set -e
-          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" "
-            set -e
-            if [ -d '$REMOTE_ROOT/.git' ]; then
-              cd '$REMOTE_ROOT'
-              git fetch origin '$REPO_BRANCH'
-              git reset --hard 'origin/$REPO_BRANCH'
-            else
-              rm -rf '$REMOTE_ROOT'
-              git clone --branch '$REPO_BRANCH' '$REPO_URL' '$REMOTE_ROOT'
-            fi
-          "
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
+            "PROJECT_DIR='$PROJECT_DIR' bash -s" <<'REMOTE_SCRIPT'
+set -e
+cd "$PROJECT_DIR"
+dotnet restore BankAPI/BankAPI.csproj
+dotnet restore BankWeb/BankWeb.csproj
+REMOTE_SCRIPT
         '''
       }
     }
@@ -71,15 +69,13 @@ pipeline {
       steps {
         sh '''
           set -e
-          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" "
-            set -e
-            cd '$PROJECT_DIR'
-            export ANDROID_HOME=/opt/android-sdk
-            export ANDROID_SDK_ROOT=/opt/android-sdk
-            export PATH=\$PATH:/home/vagrant/.dotnet/tools:/opt/android-sdk/platform-tools:/opt/android-sdk/cmdline-tools/latest/bin
-            dotnet restore BankAPP.slnx /p:AndroidSdkDirectory=/opt/android-sdk/
-            dotnet build BankAPP.slnx -c '$CONFIGURATION' --no-restore /p:AndroidSdkDirectory=/opt/android-sdk/
-          "
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
+            "PROJECT_DIR='$PROJECT_DIR' CONFIGURATION='$CONFIGURATION' bash -s" <<'REMOTE_SCRIPT'
+set -e
+cd "$PROJECT_DIR"
+dotnet build BankAPI/BankAPI.csproj -c "$CONFIGURATION" --no-restore
+dotnet build BankWeb/BankWeb.csproj -c "$CONFIGURATION" --no-restore
+REMOTE_SCRIPT
         '''
       }
     }
@@ -88,72 +84,105 @@ pipeline {
       steps {
         sh '''
           set -e
-          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" "
-            set -e
-            cd '$PROJECT_DIR'
-            export ANDROID_HOME=/opt/android-sdk
-            export ANDROID_SDK_ROOT=/opt/android-sdk
-            export PATH=\$PATH:/home/vagrant/.dotnet/tools:/opt/android-sdk/platform-tools:/opt/android-sdk/cmdline-tools/latest/bin
-            export SONAR_TOKEN='$SONAR_TOKEN'
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
+            "PROJECT_DIR='$PROJECT_DIR' CONFIGURATION='$CONFIGURATION' SONAR_HOST_URL='$SONAR_HOST_URL' SONAR_PROJECT_KEY='$SONAR_PROJECT_KEY' SONAR_TOKEN='$SONAR_TOKEN' bash -s" <<'REMOTE_SCRIPT'
+set -e
+cd "$PROJECT_DIR"
+export PATH="$PATH:/home/vagrant/.dotnet/tools"
 
-            dotnet sonarscanner begin \
-              /k:'$SONAR_PROJECT_KEY' \
-              /n:'Bank Mobile App' \
-              /d:sonar.host.url='$SONAR_HOST_URL' \
-              /d:sonar.token=\$SONAR_TOKEN \
-              /d:sonar.exclusions='**/bin/**,**/obj/**'
+dotnet sonarscanner begin \
+  /k:"$SONAR_PROJECT_KEY" \
+  /n:"Bank Web API" \
+  /d:sonar.host.url="$SONAR_HOST_URL" \
+  /d:sonar.token="$SONAR_TOKEN" \
+  /d:sonar.exclusions="**/bin/**,**/obj/**"
 
-            dotnet build BankAPP.slnx -c '$CONFIGURATION' --no-restore /p:AndroidSdkDirectory=/opt/android-sdk/
+dotnet build BankAPI/BankAPI.csproj -c "$CONFIGURATION" --no-restore
+dotnet build BankWeb/BankWeb.csproj -c "$CONFIGURATION" --no-restore
 
-            dotnet sonarscanner end /d:sonar.token=\$SONAR_TOKEN
-          "
+dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+REMOTE_SCRIPT
         '''
       }
     }
 
-    stage('Publish APK to Nexus') {
+    stage('Publish') {
       steps {
         sh '''
           set -e
           sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
-            "CONFIGURATION='$CONFIGURATION' ANDROID_TFM='$ANDROID_TFM' NEXUS_URL='$NEXUS_URL' NEXUS_REPOSITORY='$NEXUS_REPOSITORY' BUILD_NUMBER='$BUILD_NUMBER' NEXUS_USER='$NEXUS_CREDS_USR' NEXUS_PASS='$NEXUS_CREDS_PSW' bash -s" <<'REMOTE_SCRIPT'
-            set -e
-            cd /home/vagrant/tu-project/BankApp
+            "PROJECT_DIR='$PROJECT_DIR' PUBLISH_ROOT='$PUBLISH_ROOT' CONFIGURATION='$CONFIGURATION' BUILD_NUMBER='$BUILD_NUMBER' bash -s" <<'REMOTE_SCRIPT'
+set -e
+cd "$PROJECT_DIR"
+rm -rf "$PUBLISH_ROOT"
+mkdir -p "$PUBLISH_ROOT/api" "$PUBLISH_ROOT/web" "$PUBLISH_ROOT/artifacts"
 
-            APK_DIR="BankAPP/bin/$CONFIGURATION/$ANDROID_TFM"
-            echo "Looking for APK in $APK_DIR"
-            ls -la "$APK_DIR" || true
+dotnet publish BankAPI/BankAPI.csproj -c "$CONFIGURATION" --no-restore -o "$PUBLISH_ROOT/api"
+dotnet publish BankWeb/BankWeb.csproj -c "$CONFIGURATION" --no-restore -o "$PUBLISH_ROOT/web"
 
-            APK=""
-            for candidate in "$APK_DIR"/*Signed.apk "$APK_DIR"/*.apk; do
-              if [ -f "$candidate" ]; then
-                APK="$candidate"
-                break
-              fi
-            done
-
-            if [ -z "$APK" ]; then
-              echo 'No APK found to publish.'
-              exit 1
-            fi
-
-            FILE_NAME="$(basename "$APK")"
-            TARGET_URL="$NEXUS_URL/repository/$NEXUS_REPOSITORY/$BUILD_NUMBER/$FILE_NAME"
-
-            echo "Uploading $APK to Nexus"
-            curl -fsS \
-              -u "$NEXUS_USER:$NEXUS_PASS" \
-              --upload-file "$APK" \
-              "$TARGET_URL"
+tar -C "$PUBLISH_ROOT/api" -czf "$PUBLISH_ROOT/artifacts/bankapi-$BUILD_NUMBER.tar.gz" .
+tar -C "$PUBLISH_ROOT/web" -czf "$PUBLISH_ROOT/artifacts/bankweb-$BUILD_NUMBER.tar.gz" .
 REMOTE_SCRIPT
+        '''
+      }
+    }
+
+    stage('Upload Artifacts to Nexus') {
+      steps {
+        sh '''
+          set -e
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
+            "PUBLISH_ROOT='$PUBLISH_ROOT' BUILD_NUMBER='$BUILD_NUMBER' NEXUS_URL='$NEXUS_URL' NEXUS_REPOSITORY='$NEXUS_REPOSITORY' NEXUS_USER='$NEXUS_CREDS_USR' NEXUS_PASS='$NEXUS_CREDS_PSW' bash -s" <<'REMOTE_SCRIPT'
+set -e
+curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankapi-$BUILD_NUMBER.tar.gz" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/web-api/$BUILD_NUMBER/bankapi-$BUILD_NUMBER.tar.gz"
+curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankweb-$BUILD_NUMBER.tar.gz" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/web-api/$BUILD_NUMBER/bankweb-$BUILD_NUMBER.tar.gz"
+REMOTE_SCRIPT
+        '''
+      }
+    }
+
+    stage('Deploy App VM') {
+      steps {
+        sh '''
+          set -e
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
+            "PUBLISH_ROOT='$PUBLISH_ROOT' bash -s" <<'REMOTE_SCRIPT'
+set -e
+sudo systemctl stop bankweb
+sudo systemctl stop bankapi
+
+sudo rm -rf /opt/bankapp/api /opt/bankapp/web
+sudo mkdir -p /opt/bankapp/api /opt/bankapp/web
+sudo cp -a "$PUBLISH_ROOT/api/." /opt/bankapp/api/
+sudo cp -a "$PUBLISH_ROOT/web/." /opt/bankapp/web/
+sudo chown -R www-data:www-data /opt/bankapp/api /opt/bankapp/web
+sudo chmod +x /opt/bankapp/api/BankAPI /opt/bankapp/web/BankWeb
+
+sudo systemctl daemon-reload
+sudo systemctl start bankapi
+sudo systemctl start bankweb
+sudo systemctl --no-pager -l status bankapi
+sudo systemctl --no-pager -l status bankweb
+REMOTE_SCRIPT
+        '''
+      }
+    }
+
+    stage('Smoke Test') {
+      steps {
+        sh '''
+          set -e
+          curl -fsS "$API_URL/swagger/v1/swagger.json" >/dev/null
+          curl -fsS "$API_URL/api/users/testuser" >/dev/null
+          curl -fsS "$WEB_URL/" >/dev/null
         '''
       }
     }
   }
 
   post {
-    always {
-      echo 'Build, SonarQube analysis, and Nexus publish finished.'
+    success {
+      echo 'Web and API build, analysis, publish, deploy, and smoke tests completed.'
     }
   }
 }
