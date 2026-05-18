@@ -6,14 +6,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+var bankApiBaseAddress = builder.Configuration["BankApi:BaseAddress"] ?? "http://localhost:5000/";
+
 builder.Services.AddHttpClient("BankApi", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7083/");
+    client.BaseAddress = new Uri(bankApiBaseAddress);
 });
 
 builder.Services.AddHttpClient("BankApiAnonymous", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7083/");
+    client.BaseAddress = new Uri(bankApiBaseAddress);
 });
 
 builder.Services.AddScoped<ApiAuthService>();
@@ -27,10 +29,11 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    app.UseHsts();
 }
-
-app.UseHttpsRedirection();
+else
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAntiforgery();
 
