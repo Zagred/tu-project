@@ -172,9 +172,9 @@ REMOTE_SCRIPT
       steps {
         sh '''
           set -e
-          curl -fsS "$API_URL/swagger/v1/swagger.json" >/dev/null
-          curl -fsS "$API_URL/api/users/testuser" >/dev/null
-          curl -fsS "$WEB_URL/" >/dev/null
+          curl --retry 15 --retry-all-errors --retry-delay 2 --connect-timeout 5 -fsS "$API_URL/swagger/v1/swagger.json" >/dev/null
+          curl --retry 15 --retry-all-errors --retry-delay 2 --connect-timeout 5 -fsS "$API_URL/api/users/testuser" >/dev/null
+          curl --retry 15 --retry-all-errors --retry-delay 2 --connect-timeout 5 -fsS "$WEB_URL/" >/dev/null
         '''
       }
     }
