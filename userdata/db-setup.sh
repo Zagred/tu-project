@@ -7,7 +7,7 @@ SQL_CONTAINER_NAME="${SQL_CONTAINER_NAME:-bankapp-sql}"
 SQL_IMAGE="${SQL_IMAGE:-mcr.microsoft.com/mssql/server:2022-latest}"
 SQL_VOLUME="${SQL_VOLUME:-bankapp-sql-data}"
 SQL_PORT="${SQL_PORT:-1433}"
-SQL_PASSWORD="${SQL_PASSWORD:-BankApp_Strong_Pass_123!}"
+SQL_PASSWORD="${SQL_PASSWORD:?SQL_PASSWORD must be set before provisioning the DB VM}"
 
 sudo apt-get update -y
 sudo apt-get install -y ca-certificates curl docker.io

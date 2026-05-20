@@ -48,7 +48,11 @@ if [ -n "${BANKAPP_API_IMAGE:-}" ] && [ -n "${BANKAPP_WEB_IMAGE:-}" ]; then
     BANKAPP_API_BASE_ADDRESS="${BANKAPP_API_BASE_ADDRESS:-}" \
     docker compose -f docker-compose.deploy.yml up -d
 else
-  sudo env BANKAPP_SOURCE_DIR="$BANKAPP_SOURCE_DIR" docker compose up -d --build
+  sudo env \
+    BANKAPP_SOURCE_DIR="$BANKAPP_SOURCE_DIR" \
+    BANKAPP_DB_CONNECTION_STRING="${BANKAPP_DB_CONNECTION_STRING:-}" \
+    BANKAPP_API_BASE_ADDRESS="${BANKAPP_API_BASE_ADDRESS:-}" \
+    docker compose up -d --build
 fi
 
 sudo docker compose ps

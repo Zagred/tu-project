@@ -23,7 +23,7 @@ namespace BankAPP
 
             builder.Services.AddHttpClient("BankApi", client =>
             {
-                client.BaseAddress = new Uri("https://localhost:7083/");
+                client.BaseAddress = new Uri("http://192.168.56.104:7083/");
             })
             .AddHttpMessageHandler<AuthMessageHandler>();
 

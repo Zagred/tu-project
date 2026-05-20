@@ -73,6 +73,10 @@ Vagrant.configure("2") do |config|
       vb.cpus = 2
       stabilize_virtualbox.call(vb)
     end
-    vm.vm.provision "shell", path: "userdata/db-setup.sh"
+    vm.vm.provision "shell",
+      path: "userdata/db-setup.sh",
+      env: {
+        "SQL_PASSWORD" => ENV.fetch("BANKAPP_DB_PASSWORD", "")
+      }
   end
 end
