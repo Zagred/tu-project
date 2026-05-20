@@ -47,12 +47,23 @@ if [ -n "${BANKAPP_API_IMAGE:-}" ] && [ -n "${BANKAPP_WEB_IMAGE:-}" ]; then
     BANKAPP_DB_CONNECTION_STRING="${BANKAPP_DB_CONNECTION_STRING:-}" \
     BANKAPP_API_BASE_ADDRESS="${BANKAPP_API_BASE_ADDRESS:-}" \
     docker compose -f docker-compose.deploy.yml up -d
+
+  sudo env \
+    BANKAPP_API_IMAGE="$BANKAPP_API_IMAGE" \
+    BANKAPP_WEB_IMAGE="$BANKAPP_WEB_IMAGE" \
+    BANKAPP_DB_CONNECTION_STRING="${BANKAPP_DB_CONNECTION_STRING:-}" \
+    BANKAPP_API_BASE_ADDRESS="${BANKAPP_API_BASE_ADDRESS:-}" \
+    docker compose -f docker-compose.deploy.yml ps
 else
   sudo env \
     BANKAPP_SOURCE_DIR="$BANKAPP_SOURCE_DIR" \
     BANKAPP_DB_CONNECTION_STRING="${BANKAPP_DB_CONNECTION_STRING:-}" \
     BANKAPP_API_BASE_ADDRESS="${BANKAPP_API_BASE_ADDRESS:-}" \
     docker compose up -d --build
-fi
 
-sudo docker compose ps
+  sudo env \
+    BANKAPP_SOURCE_DIR="$BANKAPP_SOURCE_DIR" \
+    BANKAPP_DB_CONNECTION_STRING="${BANKAPP_DB_CONNECTION_STRING:-}" \
+    BANKAPP_API_BASE_ADDRESS="${BANKAPP_API_BASE_ADDRESS:-}" \
+    docker compose ps
+fi
