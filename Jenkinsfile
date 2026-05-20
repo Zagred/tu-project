@@ -13,6 +13,7 @@ pipeline {
     CONFIGURATION        = 'Release'
     MOBILE_CONFIGURATION = 'Debug'
     ANDROID_TFM          = 'net10.0-android'
+    ANDROID_SDK_DIR      = '/opt/android-sdk'
 
     API_PORT = '7083'
     WEB_PORT = '5000'
@@ -104,15 +105,19 @@ REMOTE_SCRIPT
         sh '''
           set -e
           sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
-            "PROJECT_DIR='$PROJECT_DIR' PUBLISH_ROOT='$PUBLISH_ROOT' CONFIGURATION='$CONFIGURATION' MOBILE_CONFIGURATION='$MOBILE_CONFIGURATION' ANDROID_TFM='$ANDROID_TFM' BUILD_NUMBER='$BUILD_NUMBER' bash -s" <<'REMOTE_SCRIPT'
+            "PROJECT_DIR='$PROJECT_DIR' PUBLISH_ROOT='$PUBLISH_ROOT' CONFIGURATION='$CONFIGURATION' MOBILE_CONFIGURATION='$MOBILE_CONFIGURATION' ANDROID_TFM='$ANDROID_TFM' ANDROID_SDK_DIR='$ANDROID_SDK_DIR' BUILD_NUMBER='$BUILD_NUMBER' bash -s" <<'REMOTE_SCRIPT'
 set -e
 cd "$PROJECT_DIR"
+export ANDROID_HOME="$ANDROID_SDK_DIR"
+export ANDROID_SDK_ROOT="$ANDROID_SDK_DIR"
+export PATH="$PATH:$ANDROID_SDK_DIR/platform-tools:$ANDROID_SDK_DIR/cmdline-tools/latest/bin"
+
 rm -rf "$PUBLISH_ROOT"
 mkdir -p "$PUBLISH_ROOT/api" "$PUBLISH_ROOT/web" "$PUBLISH_ROOT/artifacts"
 
 dotnet publish BankAPI/BankAPI.csproj -c "$CONFIGURATION" --no-restore -o "$PUBLISH_ROOT/api"
 dotnet publish BankWeb/BankWeb.csproj -c "$CONFIGURATION" --no-restore -o "$PUBLISH_ROOT/web"
-dotnet publish BankAPP/BankAPP.csproj -f "$ANDROID_TFM" -c "$MOBILE_CONFIGURATION" -p:AndroidPackageFormat=apk -p:EmbedAssembliesIntoApk=true
+dotnet publish BankAPP/BankAPP.csproj -f "$ANDROID_TFM" -c "$MOBILE_CONFIGURATION" -p:AndroidPackageFormat=apk -p:EmbedAssembliesIntoApk=true -p:AndroidSdkDirectory="$ANDROID_SDK_DIR/"
 
 tar -C "$PUBLISH_ROOT/api" -czf "$PUBLISH_ROOT/artifacts/bankapi-$BUILD_NUMBER.tar.gz" .
 tar -C "$PUBLISH_ROOT/web" -czf "$PUBLISH_ROOT/artifacts/bankweb-$BUILD_NUMBER.tar.gz" .
