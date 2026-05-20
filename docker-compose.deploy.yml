@@ -1,0 +1,36 @@
+name: bankapp
+
+services:
+  bankapi:
+    image: "${BANKAPP_API_IMAGE}"
+    container_name: bankapp-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:7083
+      DOTNET_PRINT_TELEMETRY_MESSAGE: "false"
+      ConnectionStrings__DefaultConnection: "${BANKAPP_DB_CONNECTION_STRING:-Server=192.168.56.105,1433;Database=BankAppDb;User Id=sa;Password=BankApp_Strong_Pass_123!;TrustServerCertificate=True;}"
+    ports:
+      - "7083:7083"
+    volumes:
+      - bankapi-data-protection:/root/.aspnet/DataProtection-Keys
+
+  bankweb:
+    image: "${BANKAPP_WEB_IMAGE}"
+    container_name: bankapp-web
+    restart: unless-stopped
+    depends_on:
+      - bankapi
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:5000
+      DOTNET_PRINT_TELEMETRY_MESSAGE: "false"
+      BankApi__BaseAddress: "${BANKAPP_API_BASE_ADDRESS:-http://bankapi:7083/}"
+    ports:
+      - "5000:5000"
+    volumes:
+      - bankweb-data-protection:/root/.aspnet/DataProtection-Keys
+
+volumes:
+  bankapi-data-protection:
+  bankweb-data-protection:

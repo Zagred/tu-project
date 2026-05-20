@@ -2,6 +2,8 @@
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
+source /vagrant_userdata/common-swap.sh
+ensure_swap 2G
 
 NEXUS_VERSION="${NEXUS_VERSION:-3.78.0-14}"
 NEXUS_URL="https://download.sonatype.com/nexus/3/nexus-unix-x86-64-${NEXUS_VERSION}.tar.gz"
@@ -41,6 +43,10 @@ fi
 sudo useradd -m -s /bin/bash nexus || true
 sudo chown -R nexus:nexus /opt/nexus
 echo 'run_as_user="nexus"' | sudo tee "/opt/nexus/$NEXUS_DIR/bin/nexus.rc" >/dev/null
+sudo sed -i \
+  -e 's/^-Xms.*/-Xms512m/' \
+  -e 's/^-Xmx.*/-Xmx1024m/' \
+  "/opt/nexus/$NEXUS_DIR/bin/nexus.vmoptions"
 
 sudo tee /etc/systemd/system/nexus.service >/dev/null <<EOT
 [Unit]

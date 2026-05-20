@@ -2,6 +2,7 @@
 *.tgz
 *.tar.gz
 *.log
+*-console*.png
 
 userdata/id_rsa
 userdata/id_rsa.pub

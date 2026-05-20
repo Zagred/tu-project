@@ -1,0 +1,12 @@
+.git
+.vagrant
+**/.vs
+**/bin
+**/obj
+**/*.user
+**/*.suo
+**/*.log
+**/build-output.txt
+*.tgz
+*.tar.gz
+*-console*.png

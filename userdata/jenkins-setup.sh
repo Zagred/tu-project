@@ -2,6 +2,8 @@
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
+source /vagrant_userdata/common-swap.sh
+ensure_swap 2G
 
 sudo install -d -m 0755 /etc/apt/keyrings
 sudo rm -f /etc/apt/sources.list.d/jenkins.list

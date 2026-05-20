@@ -22,9 +22,13 @@ pipeline {
     NEXUS_URL        = 'http://192.168.56.101:8081'
     NEXUS_REPOSITORY = 'android-apps'
 
+    DOCKER_API_IMAGE = 'bankapp-api'
+    DOCKER_WEB_IMAGE = 'bankapp-web'
+
     VAGRANT_CREDS = credentials('vagrant-login')
     NEXUS_CREDS   = credentials('nexus-login')
     SONAR_TOKEN   = credentials('sonartoken')
+    DOCKERHUB_CREDS = credentials('docker-hub-credentials')
   }
 
   stages {
@@ -39,12 +43,10 @@ pipeline {
         sh '''
           set -e
           sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
-            "REPO_BRANCH='$REPO_BRANCH' REMOTE_ROOT='$REMOTE_ROOT' bash -s" <<'REMOTE_SCRIPT'
+            "REPO_URL='$REPO_URL' REPO_BRANCH='$REPO_BRANCH' REMOTE_ROOT='$REMOTE_ROOT' bash -s" <<'REMOTE_SCRIPT'
 set -e
-cd "$REMOTE_ROOT"
-git fetch origin "$REPO_BRANCH"
-git reset --hard "origin/$REPO_BRANCH"
-git clean -fdx
+rm -rf "$REMOTE_ROOT"
+git clone --branch "$REPO_BRANCH" "$REPO_URL" "$REMOTE_ROOT"
 REMOTE_SCRIPT
         '''
       }
@@ -141,28 +143,49 @@ REMOTE_SCRIPT
       }
     }
 
-    stage('Deploy App VM') {
+    stage('Build and Push Docker Images') {
+      steps {
+        sh '''
+          set -e
+          echo "$DOCKERHUB_CREDS_PSW" | docker login -u "$DOCKERHUB_CREDS_USR" --password-stdin
+
+          docker build \
+            -f docker/BankAPI.Dockerfile \
+            --build-arg APP_DIR=BankApp \
+            -t "$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:$BUILD_NUMBER" \
+            -t "$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:latest" \
+            .
+
+          docker build \
+            -f docker/BankWeb.Dockerfile \
+            --build-arg APP_DIR=BankApp \
+            -t "$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:$BUILD_NUMBER" \
+            -t "$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:latest" \
+            .
+
+          docker push "$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:$BUILD_NUMBER"
+          docker push "$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:latest"
+          docker push "$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:$BUILD_NUMBER"
+          docker push "$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:latest"
+          docker logout
+        '''
+      }
+    }
+
+    stage('Deploy App VM with Docker') {
       steps {
         sh '''
           set -e
           sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
-            "PUBLISH_ROOT='$PUBLISH_ROOT' bash -s" <<'REMOTE_SCRIPT'
+            "REMOTE_ROOT='$REMOTE_ROOT' BANKAPP_API_IMAGE='$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:$BUILD_NUMBER' BANKAPP_WEB_IMAGE='$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:$BUILD_NUMBER' DOCKERHUB_USER='$DOCKERHUB_CREDS_USR' DOCKERHUB_PASS='$DOCKERHUB_CREDS_PSW' bash -s" <<'REMOTE_SCRIPT'
 set -e
-sudo systemctl stop bankweb
-sudo systemctl stop bankapi
-
-sudo rm -rf /opt/bankapp/api /opt/bankapp/web
-sudo mkdir -p /opt/bankapp/api /opt/bankapp/web
-sudo cp -a "$PUBLISH_ROOT/api/." /opt/bankapp/api/
-sudo cp -a "$PUBLISH_ROOT/web/." /opt/bankapp/web/
-sudo chown -R www-data:www-data /opt/bankapp/api /opt/bankapp/web
-sudo chmod +x /opt/bankapp/api/BankAPI /opt/bankapp/web/BankWeb
-
-sudo systemctl daemon-reload
-sudo systemctl start bankapi
-sudo systemctl start bankweb
-sudo systemctl --no-pager -l status bankapi
-sudo systemctl --no-pager -l status bankweb
+sudo env \
+  APP_ROOT="$REMOTE_ROOT" \
+  BANKAPP_API_IMAGE="$BANKAPP_API_IMAGE" \
+  BANKAPP_WEB_IMAGE="$BANKAPP_WEB_IMAGE" \
+  DOCKERHUB_USER="$DOCKERHUB_USER" \
+  DOCKERHUB_PASS="$DOCKERHUB_PASS" \
+  bash "$REMOTE_ROOT/userdata/app-docker-deploy.sh"
 REMOTE_SCRIPT
         '''
       }

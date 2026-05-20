@@ -2,6 +2,8 @@
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
+source /vagrant_userdata/common-swap.sh
+ensure_swap 2G
 
 sudo dpkg --configure -a
 sudo apt-get update -y

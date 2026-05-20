@@ -2,6 +2,8 @@
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
+source /vagrant_userdata/common-swap.sh
+ensure_swap 4G
 
 SONAR_VERSION="${SONAR_VERSION:-9.9.8.100196}"
 SONAR_ZIP="sonarqube-${SONAR_VERSION}.zip"
@@ -66,6 +68,8 @@ sonar.jdbc.url=jdbc:postgresql://localhost/sonarqube
 sonar.web.host=0.0.0.0
 sonar.web.port=9000
 sonar.web.javaAdditionalOpts=-server
+sonar.web.javaOpts=-Xmx768m -Xms256m
+sonar.ce.javaOpts=-Xmx512m -Xms256m
 sonar.search.javaOpts=-Xmx512m -Xms512m -XX:+HeapDumpOnOutOfMemoryError
 sonar.log.level=INFO
 sonar.path.logs=logs
