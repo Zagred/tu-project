@@ -15,6 +15,9 @@ services:
       ASPNETCORE_URLS: http://0.0.0.0:7083
       DOTNET_PRINT_TELEMETRY_MESSAGE: "false"
       ConnectionStrings__DefaultConnection: "${BANKAPP_DB_CONNECTION_STRING:?BANKAPP_DB_CONNECTION_STRING is required}"
+      Ollama__BaseAddress: "${BANKAPP_OLLAMA_BASE_ADDRESS:-http://host.docker.internal:11434/}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "7083:7083"
     volumes:

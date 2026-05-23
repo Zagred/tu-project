@@ -2,129 +2,365 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="BankAPP.AccountsPage"
-             Title="Accounts">
+             Title="Accounts"
+             BackgroundColor="{StaticResource PageBg}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="18">
+    <Grid RowDefinitions="52,*" ColumnDefinitions="220,*">
 
-            <!-- HEADER -->
-            <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
-                <VerticalStackLayout Spacing="4">
-                    <Label Text="My Accounts"
-                           FontSize="30"
-                           FontAttributes="Bold" />
+        <!-- ══════════════════════════════════
+             SIDEBAR
+        ══════════════════════════════════ -->
+        <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
+              BackgroundColor="{StaticResource NavyDeep}"
+              RowDefinitions="Auto,*,Auto">
 
-                    <Label x:Name="WelcomeLabel"
-                           Text="Welcome!"
-                           FontSize="16"
-                           FontAttributes="Italic"
-                           Opacity="0.85" />
+            <!-- Лого -->
+            <HorizontalStackLayout Grid.Row="0" Spacing="10"
+                                   Padding="20,22,20,20">
+                <Border BackgroundColor="{StaticResource BrandRed}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 8"
+                        WidthRequest="34" HeightRequest="34"
+                        Padding="0">
+                    <Path Data="M11.5 1L2 6v2h19V6M16 10v7M12 10v7M8 10v7M2 19h19M2 22h19"
+                          Stroke="White" StrokeThickness="1.6"
+                          StrokeLineCap="Round" StrokeLineJoin="Round"
+                          WidthRequest="18" HeightRequest="18"
+                          Aspect="Uniform"
+                          HorizontalOptions="Center" VerticalOptions="Center"/>
+                </Border>
+                <VerticalStackLayout Spacing="1" VerticalOptions="Center">
+                    <Label Text="BankApp" FontSize="15" FontAttributes="Bold" TextColor="White"/>
+                    <Label Text="ДИГИТАЛНО БАНКИРАНЕ" FontSize="8"
+                           CharacterSpacing="0.6" TextColor="#55FFFFFF"/>
                 </VerticalStackLayout>
+            </HorizontalStackLayout>
 
-                <Button Grid.Column="1"
-                        Text="Logout"
-                        CornerRadius="12"
-                        HeightRequest="42"
-                        Clicked="OnLogoutClicked" />
-            </Grid>
+            <!-- Nav items -->
+            <VerticalStackLayout Grid.Row="1" Padding="10,16" Spacing="2">
 
-            <!-- ACCOUNTS -->
-            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
-                <VerticalStackLayout Spacing="12">
+                <Label Text="ГЛАВНО МЕНЮ" FontSize="9" CharacterSpacing="0.8"
+                       TextColor="#44FFFFFF" Margin="10,0,0,8"
+                       TextTransform="Uppercase"/>
 
-                    <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
-                        <Label Text="Accounts"
-                               FontSize="22"
-                               FontAttributes="Bold" />
+                <!-- Сметки — активен -->
+                <Border BackgroundColor="{StaticResource BrandRed}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 7"
+                        Padding="10,9">
+                    <HorizontalStackLayout Spacing="10">
+                        <Path Data="M3 9 L12 2 L21 9 L21 21 L5 21 Z M9 21 L9 12 L15 12 L15 21"
+                              Stroke="White" StrokeThickness="1.6"
+                              StrokeLineCap="Round" StrokeLineJoin="Round"
+                              WidthRequest="17" HeightRequest="17" Aspect="Uniform"
+                              VerticalOptions="Center"/>
+                        <Label Text="Сметки" FontSize="13" TextColor="White" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Border>
 
-                        <Button Grid.Column="1"
-                                Text="+ New"
-                                CornerRadius="12"
-                                HeightRequest="36"
-                                Padding="8"
-                                FontSize="12"
-                                Clicked="OnCreateAccountClicked" />
+                <!-- Преводи -->
+                <Button Text="Преводи"
+                    BackgroundColor="Transparent"
+                    TextColor="#77FFFFFF"
+                    BorderWidth="0"
+                    CornerRadius="7"
+                    FontSize="13"
+                    HeightRequest="42"
+                    HorizontalOptions="Fill"
+                    Padding="10,0"
+                    Clicked="OnNavigateToTransfers"/>
+
+                <!-- Плащания -->
+                <Button Text="Плащания"
+                    BackgroundColor="Transparent"
+                    TextColor="#77FFFFFF"
+                    BorderWidth="0"
+                    CornerRadius="7"
+                    FontSize="13"
+                    HeightRequest="42"
+                    HorizontalOptions="Fill"
+                    Padding="10,0"
+                    Clicked="OnNavigateToPayments"/>
+
+            </VerticalStackLayout>
+
+            <!-- User footer -->
+            <VerticalStackLayout Grid.Row="2" Padding="10,14">
+                <BoxView HeightRequest="0.5" Color="#33FFFFFF" Margin="0,0,0,12"/>
+                <HorizontalStackLayout Spacing="10" Padding="10,0">
+                    <Border BackgroundColor="{StaticResource BrandRed}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 16"
+                            WidthRequest="32" HeightRequest="32">
+                        <Label x:Name="AvatarLabel"
+                               Text="?"
+                               FontSize="13" FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Border>
+                    <VerticalStackLayout Spacing="1" VerticalOptions="Center">
+                        <Label x:Name="SidebarUsernameLabel"
+                               Text="—"
+                               FontSize="12" FontAttributes="Bold"
+                               TextColor="#CCFFFFff"/>
+                        <Label Text="Стандартен акаунт"
+                               FontSize="10" TextColor="#55FFFFFF"/>
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- ══════════════════════════════════
+             TOPBAR
+        ══════════════════════════════════ -->
+        <Grid Grid.Row="0" Grid.Column="1"
+              BackgroundColor="White"
+              ColumnDefinitions="*,Auto,Auto"
+              Padding="24,0"
+              ColumnSpacing="10">
+
+            <Label Grid.Column="0"
+                   x:Name="WelcomeLabel"
+                   Text="Моите сметки"
+                   FontSize="16" FontAttributes="Bold"
+                   TextColor="{StaticResource TextPrimary}"
+                   VerticalOptions="Center"/>
+
+            <Border Grid.Column="1"
+                    BackgroundColor="#F3F4F6"
+                    StrokeThickness="0.5" Stroke="{StaticResource BorderColor}"
+                    StrokeShape="RoundRectangle 6"
+                    Padding="12,5">
+                <Label Text="17 май 2026" FontSize="11"
+                       TextColor="{StaticResource TextMuted}"
+                       VerticalOptions="Center"/>
+            </Border>
+
+            <Button Grid.Column="2"
+                    Text="Изход"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource TextMuted}"
+                    BorderColor="{StaticResource BorderColor}"
+                    BorderWidth="1"
+                    CornerRadius="7"
+                    FontSize="12" FontAttributes="Bold"
+                    HeightRequest="34" Padding="14,0"
+                    Clicked="OnLogoutClicked"/>
+        </Grid>
+
+        <!-- ══════════════════════════════════
+             MAIN CONTENT
+        ══════════════════════════════════ -->
+        <ScrollView Grid.Row="1" Grid.Column="1">
+            <VerticalStackLayout Padding="24" Spacing="14">
+
+                <!-- BALANCE HERO -->
+                <Border BackgroundColor="{StaticResource Navy}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="24,20">
+                    <Grid ColumnDefinitions="*,Auto">
+
+                        <VerticalStackLayout Grid.Column="0" Spacing="6">
+                            <Label Text="Общ баланс по всички сметки"
+                                   FontSize="11" TextColor="#77FFFFFF"/>
+                            <Label x:Name="BalanceLabel"
+                                   Text="0,00"
+                                   Style="{StaticResource BalanceNumber}"/>
+                            <HorizontalStackLayout Spacing="10" Margin="0,8,0,0">
+                                <Button Text="Нов превод"
+                                        Style="{StaticResource PrimaryBtn}"
+                                        HeightRequest="40" FontSize="13"
+                                        Padding="16,0"
+                                        Clicked="OnTransferClicked"/>
+                                <Button Text="+ Нова сметка"
+                                        BackgroundColor="#22FFFFFF"
+                                        TextColor="White"
+                                        BorderWidth="0"
+                                        CornerRadius="9"
+                                        HeightRequest="40" FontSize="13"
+                                        Padding="16,0"
+                                        Clicked="OnCreateAccountClicked"/>
+                                <Button Text="Обнови"
+                                        BackgroundColor="#22FFFFFF"
+                                        TextColor="White"
+                                        BorderWidth="0"
+                                        CornerRadius="9"
+                                        HeightRequest="40" FontSize="13"
+                                        Padding="16,0"
+                                        Clicked="OnRefreshClicked"/>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="12"
+                                             HorizontalOptions="End"
+                                             VerticalOptions="Center">
+                            <VerticalStackLayout Spacing="2" HorizontalOptions="End">
+                                <Label Text="Приходи" FontSize="10" TextColor="#55FFFFFF"
+                                       HorizontalOptions="End"/>
+                                <Label x:Name="IncomeLabel" Text="0,00"
+                                       FontSize="18" FontAttributes="Bold"
+                                       TextColor="#4ADE80"
+                                       HorizontalOptions="End"/>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="2" HorizontalOptions="End">
+                                <Label Text="Разходи" FontSize="10" TextColor="#55FFFFFF"
+                                       HorizontalOptions="End"/>
+                                <Label x:Name="ExpenseLabel" Text="0,00"
+                                       FontSize="18" FontAttributes="Bold"
+                                       TextColor="#F87171"
+                                       HorizontalOptions="End"/>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+
                     </Grid>
+                </Border>
 
-                    <CollectionView x:Name="AccountsCollection"
-                                    SelectionMode="None"
-                                    HeightRequest="160">
+                <!-- ACCOUNTS + STATS -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
 
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <Frame Padding="10" Margin="0,5" CornerRadius="14" BorderColor="LightGray">
-                                    <VerticalStackLayout Spacing="4">
+                    <!-- Сметки -->
+                    <Border Grid.Column="0" Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0" Text="Всички сметки"
+                                       Style="{StaticResource SectionTitle}"/>
+                                <Button Grid.Column="1"
+                                        Text="+ Нова"
+                                        Style="{StaticResource PrimaryBtn}"
+                                        HeightRequest="32" FontSize="11"
+                                        Padding="10,0"
+                                        Clicked="OnCreateAccountClicked"/>
+                            </Grid>
 
-                                        <Label Text="{Binding Iban}"
-                                               FontAttributes="Bold"
-                                               FontSize="16" />
+                            <CollectionView x:Name="AccountsCollection"
+                                            SelectionMode="None">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,8"
+                                                BackgroundColor="#F8F9FC"
+                                                StrokeThickness="0.5"
+                                                Stroke="{StaticResource BorderColor}"
+                                                StrokeShape="RoundRectangle 8"
+                                                Padding="14,12">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <VerticalStackLayout Grid.Column="0" Spacing="3">
+                                                    <Label Text="{Binding Iban}"
+                                                           FontSize="12" FontAttributes="Bold"
+                                                           TextColor="{StaticResource TextPrimary}"/>
+                                                    <Label Text="{Binding Currency}"
+                                                           FontSize="11"
+                                                           TextColor="{StaticResource TextMuted}"/>
+                                                </VerticalStackLayout>
+                                                <VerticalStackLayout Grid.Column="1"
+                                                                     HorizontalOptions="End"
+                                                                     Spacing="2">
+                                                    <Label Text="{Binding Balance, StringFormat='{0:F2}'}"
+                                                           FontSize="15" FontAttributes="Bold"
+                                                           TextColor="{StaticResource SuccessGreen}"
+                                                           HorizontalOptions="End"/>
+                                                    <Label Text="{Binding Role}"
+                                                           FontSize="10"
+                                                           TextColor="{StaticResource TextMuted}"
+                                                           HorizontalOptions="End"/>
+                                                </VerticalStackLayout>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
 
-                                        <Label Text="{Binding Balance, StringFormat='Balance: {0:F2}'}" />
+                        </VerticalStackLayout>
+                    </Border>
 
-                                        <Label Text="{Binding Currency}"
-                                               Opacity="0.7" />
+                    <!-- Статистики -->
+                    <VerticalStackLayout Grid.Column="1" Spacing="14">
 
-                                        <Label Text="{Binding Role}"
-                                               Opacity="0.7" />
+                        <Border Style="{StaticResource Card}" Padding="18">
+                            <VerticalStackLayout Spacing="6">
+                                <Border BackgroundColor="#EEF2FA"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 8"
+                                        WidthRequest="34" HeightRequest="34"
+                                        HorizontalOptions="Start">
+                                    <Path Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                                          Fill="{StaticResource Navy}"
+                                          WidthRequest="18" HeightRequest="18"
+                                          Aspect="Uniform"
+                                          HorizontalOptions="Center"
+                                          VerticalOptions="Center"/>
+                                </Border>
+                                <Label Text="Баланс" FontSize="10" FontAttributes="Bold"
+                                       TextColor="{StaticResource TextMuted}"
+                                       TextTransform="Uppercase" CharacterSpacing="0.4"/>
+                                <Label x:Name="BalanceLabelAlt" Text="0,00"
+                                       FontSize="22" FontAttributes="Bold"
+                                       TextColor="{StaticResource TextPrimary}"/>
+                                <Label Text="лв общо" FontSize="11"
+                                       TextColor="{StaticResource TextMuted}"/>
+                            </VerticalStackLayout>
+                        </Border>
 
-                                    </VerticalStackLayout>
-                                </Frame>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
+                        <Border Style="{StaticResource Card}" Padding="18">
+                            <VerticalStackLayout Spacing="6">
+                                <Border BackgroundColor="{StaticResource SuccessGreenBg}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 8"
+                                        WidthRequest="34" HeightRequest="34"
+                                        HorizontalOptions="Start">
+                                    <Path Data="M7 17l9.2-9.2M17 17V7H7"
+                                          Stroke="{StaticResource SuccessGreen}"
+                                          StrokeThickness="1.8"
+                                          StrokeLineCap="Round" StrokeLineJoin="Round"
+                                          WidthRequest="18" HeightRequest="18"
+                                          Aspect="Uniform"
+                                          HorizontalOptions="Center"
+                                          VerticalOptions="Center"/>
+                                </Border>
+                                <Label Text="Приходи" FontSize="10" FontAttributes="Bold"
+                                       TextColor="{StaticResource TextMuted}"
+                                       TextTransform="Uppercase" CharacterSpacing="0.4"/>
+                                <Label x:Name="IncomeLabelAlt" Text="0,00"
+                                       FontSize="22" FontAttributes="Bold"
+                                       TextColor="{StaticResource SuccessGreen}"/>
+                                <Label Text="лв този месец" FontSize="11"
+                                       TextColor="{StaticResource TextMuted}"/>
+                            </VerticalStackLayout>
+                        </Border>
 
-                    </CollectionView>
+                        <Border Style="{StaticResource Card}" Padding="18">
+                            <VerticalStackLayout Spacing="6">
+                                <Border BackgroundColor="{StaticResource BrandRedLight}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 8"
+                                        WidthRequest="34" HeightRequest="34"
+                                        HorizontalOptions="Start">
+                                    <Path Data="M7 7l9.2 9.2M7 17V7h10"
+                                          Stroke="{StaticResource BrandRed}"
+                                          StrokeThickness="1.8"
+                                          StrokeLineCap="Round" StrokeLineJoin="Round"
+                                          WidthRequest="18" HeightRequest="18"
+                                          Aspect="Uniform"
+                                          HorizontalOptions="Center"
+                                          VerticalOptions="Center"/>
+                                </Border>
+                                <Label Text="Разходи" FontSize="10" FontAttributes="Bold"
+                                       TextColor="{StaticResource TextMuted}"
+                                       TextTransform="Uppercase" CharacterSpacing="0.4"/>
+                                <Label x:Name="ExpenseLabelAlt" Text="0,00"
+                                       FontSize="22" FontAttributes="Bold"
+                                       TextColor="{StaticResource BrandRed}"/>
+                                <Label Text="лв този месец" FontSize="11"
+                                       TextColor="{StaticResource TextMuted}"/>
+                            </VerticalStackLayout>
+                        </Border>
 
-                </VerticalStackLayout>
-            </Frame>
-
-            <!-- SUMMARY -->
-            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
-
-                <Frame Grid.Row="0" Grid.Column="0" Padding="16" CornerRadius="18" BorderColor="LightGray">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="Balance" FontAttributes="Bold" FontSize="16"/>
-                        <Label x:Name="BalanceLabel" Text="0.00" FontSize="24"/>
                     </VerticalStackLayout>
-                </Frame>
 
-                <Frame Grid.Row="0" Grid.Column="1" Padding="16" CornerRadius="18" BorderColor="LightGray">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="Income" FontAttributes="Bold" FontSize="16"/>
-                        <Label x:Name="IncomeLabel" Text="0.00" FontSize="24"/>
-                    </VerticalStackLayout>
-                </Frame>
+                </Grid>
 
-                <Frame Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Padding="16" CornerRadius="18" BorderColor="LightGray">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="Expense" FontAttributes="Bold" FontSize="16"/>
-                        <Label x:Name="ExpenseLabel" Text="0.00" FontSize="24"/>
-                    </VerticalStackLayout>
-                </Frame>
-            </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
 
-            <!-- ACTIONS -->
-            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
-                <VerticalStackLayout Spacing="12">
-
-                    <Label Text="Quick Actions"
-                           FontSize="22"
-                           FontAttributes="Bold" />
-
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
-                        <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
-            Text="Transfer"
-            CornerRadius="12"
-            Clicked="OnTransferClicked" />
-
-                        <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-            Text="Refresh"
-            CornerRadius="12"
-            Clicked="OnRefreshClicked" />
-                    </Grid>
-
-                </VerticalStackLayout>
-            </Frame>
-
-        </VerticalStackLayout>
-    </ScrollView>
+    </Grid>
 </ContentPage>

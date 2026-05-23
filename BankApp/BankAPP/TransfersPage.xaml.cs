@@ -16,6 +16,7 @@ namespace BankAPP
             MovementApiService movementApiService)
         {
             InitializeComponent();
+            NavigationPage.SetHasNavigationBar(this, false);
             _transferApiService = transferApiService;
             _accountApiService = accountApiService;
             _movementApiService = movementApiService;
@@ -31,12 +32,15 @@ namespace BankAPP
         {
             var accounts = await _accountApiService.GetMyAccountsAsync();
             FromAccountPicker.ItemsSource = accounts;
-
             if (accounts.Count > 0)
                 FromAccountPicker.SelectedIndex = 0;
 
             var transfers = await _movementApiService.GetMovementsByUserAndTypeAsync("transfer");
             TransfersCollection.ItemsSource = transfers;
+
+            var username = SessionManager.CurrentUsername ?? "?";
+            AvatarLabel.Text = username.Length > 0 ? username[0].ToString().ToUpper() : "?";
+            SidebarUsernameLabel.Text = username;
         }
 
         private async void OnTransferClicked(object sender, EventArgs e)
@@ -96,12 +100,32 @@ namespace BankAPP
 
             await DisplayAlert("Success", "Transfer completed.", "OK");
 
-            // Clear form
             ToIbanEntry.Text = string.Empty;
             AmountEntry.Text = string.Empty;
             DescriptionEntry.Text = string.Empty;
 
             await LoadDataAsync();
+        }
+
+        private void OnNavigateToAccounts(object sender, EventArgs e)
+        {
+            ((AppShell)Shell.Current).NavigateTo("Accounts");
+        }
+
+        private void OnNavigateToPayments(object sender, EventArgs e)
+        {
+            ((AppShell)Shell.Current).NavigateTo("Payments");
+        }
+
+        private async void OnLogoutClicked(object sender, EventArgs e)
+        {
+            bool confirm = await DisplayAlert("Logout", "Do you want to log out?", "Yes", "No");
+            if (!confirm) return;
+
+            SessionManager.Logout();
+
+            var loginPage = IPlatformApplication.Current!.Services.GetService<LoginPage>()!;
+            Application.Current!.MainPage = new NavigationPage(loginPage);
         }
     }
 }

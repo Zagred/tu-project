@@ -53,6 +53,11 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+builder.Services.AddHttpClient<OllamaAdviceService>(client =>
+{
+    var baseAddress = builder.Configuration["Ollama:BaseAddress"] ?? "http://localhost:11434/";
+    client.BaseAddress = new Uri(baseAddress);
+});
 
 var app = builder.Build();
 

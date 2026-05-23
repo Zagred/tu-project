@@ -8,13 +8,16 @@ namespace BankAPP
     {
         private readonly MovementApiService _movementApiService;
         private List<Movement> _allMovements = new();
-
-        public PaymentsPage(MovementApiService movementApiService)
+        private readonly AssistantApiService _assistantApiService;
+        public PaymentsPage(
+            MovementApiService movementApiService,
+            AssistantApiService assistantApiService)
         {
             InitializeComponent();
-            _movementApiService = movementApiService;
-        }
 
+            _movementApiService = movementApiService;
+            _assistantApiService = assistantApiService;
+        }
         protected override async void OnAppearing()
         {
             base.OnAppearing();
@@ -77,6 +80,12 @@ namespace BankAPP
         private void OnFilterChanged(object sender, EventArgs e)
         {
             LoadPayments(_allMovements);
+        }
+        private async void OnAiAdviceClicked(object sender, EventArgs e)
+        {
+            var advice = await _assistantApiService.GetAdviceAsync();
+
+            await DisplayAlert("AI Financial Assistant", advice, "OK");
         }
     }
 }

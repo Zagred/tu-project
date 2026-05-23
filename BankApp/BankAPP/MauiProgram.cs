@@ -43,6 +43,7 @@ namespace BankAPP
             builder.Services.AddTransient<PaymentsPage>();
             builder.Services.AddTransient<AdminPage>();
             builder.Services.AddTransient<AppShell>();
+            builder.Services.AddTransient<AssistantApiService>();
 
             return builder.Build();
         }

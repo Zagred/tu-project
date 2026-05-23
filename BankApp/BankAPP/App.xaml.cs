@@ -9,7 +9,9 @@ namespace BankAPP
             InitializeComponent();
 
             var loginPage = serviceProvider.GetRequiredService<LoginPage>();
-            MainPage = new NavigationPage(loginPage);
+            var navPage = new NavigationPage(loginPage);
+            NavigationPage.SetHasNavigationBar(loginPage, false);
+            MainPage = navPage;
         }
     }
 }

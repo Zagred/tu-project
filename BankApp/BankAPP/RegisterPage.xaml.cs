@@ -11,6 +11,7 @@ namespace BankAPP
         {
             InitializeComponent();
             _userApiService = userApiService;
+            NavigationPage.SetHasNavigationBar(this, false);
         }
 
         private async void OnRegisterClicked(object sender, EventArgs e)

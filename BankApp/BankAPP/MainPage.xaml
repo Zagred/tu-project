@@ -7,7 +7,6 @@
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="18">
 
-            <!-- HEADER -->
             <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
                 <VerticalStackLayout Spacing="4">
                     <Label Text="Bank Dashboard"
@@ -78,7 +77,7 @@
             </Frame>
 
             <!-- DASHBOARD CARDS -->
-            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+            <VerticalStackLayout Spacing="12">
 
                 <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
                     <VerticalStackLayout Spacing="10">
@@ -103,29 +102,40 @@
                         <Label Text="Payments" FontAttributes="Bold" FontSize="18" />
                         <Label x:Name="PaymentsTotalLabel" Text="Spent: 0.00" Opacity="0.7" />
                         <Label x:Name="IncomeLabel" Text="Income: 0.00" Opacity="0.7" />
-                        <Button Text="Transfer" CornerRadius="12" Clicked="OnTransferClicked" />
                     </VerticalStackLayout>
                 </Frame>
 
-            </Grid>
+            </VerticalStackLayout>
 
             <!-- SPENDING CHART -->
             <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="Spending last 7 days" FontSize="22" FontAttributes="Bold" />
+
                     <CollectionView x:Name="ChartCollectionView"
                                     ItemsLayout="HorizontalList"
                                     SelectionMode="None"
                                     HeightRequest="170">
+
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
                                 <VerticalStackLayout HorizontalOptions="Center" Spacing="8">
-                                    <BoxView HeightRequest="{Binding Height}" WidthRequest="24" Color="#4C8CFF" CornerRadius="12" />
-                                    <Label Text="{Binding DayLabel}" FontSize="12" HorizontalTextAlignment="Center" />
-                                    <Label Text="{Binding AmountText}" FontSize="12" HorizontalTextAlignment="Center" />
+                                    <BoxView HeightRequest="{Binding Height}"
+                                             WidthRequest="24"
+                                             Color="#4C8CFF"
+                                             CornerRadius="12" />
+
+                                    <Label Text="{Binding DayLabel}"
+                                           FontSize="12"
+                                           HorizontalTextAlignment="Center" />
+
+                                    <Label Text="{Binding AmountText}"
+                                           FontSize="12"
+                                           HorizontalTextAlignment="Center" />
                                 </VerticalStackLayout>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
+
                     </CollectionView>
                 </VerticalStackLayout>
             </Frame>
@@ -164,6 +174,7 @@
                                                 <Label Text="{Binding MovementTypeDisplay}"
                                                        FontAttributes="Bold"
                                                        FontSize="18"/>
+
                                                 <Label Text="{Binding Category}"
                                                        FontSize="12"
                                                        Opacity="0.7" />

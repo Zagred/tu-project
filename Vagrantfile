@@ -21,7 +21,7 @@ Vagrant.configure("2") do |config|
     vm.vm.box = BOX_NAME
     vm.vm.network "private_network", ip: "192.168.56.101"
     vm.vm.provider "virtualbox" do |vb|
-      vb.memory = "2048"
+      vb.memory = "1536"
       vb.cpus = 2
       stabilize_virtualbox.call(vb)
     end
@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
     vm.vm.box = BOX_NAME
     vm.vm.network "private_network", ip: "192.168.56.102"
     vm.vm.provider "virtualbox" do |vb|
-      vb.memory = "4096"
+      vb.memory = "3072"
       vb.cpus = 2
       stabilize_virtualbox.call(vb)
     end
@@ -57,7 +57,7 @@ Vagrant.configure("2") do |config|
     vm.vm.box = BOX_NAME
     vm.vm.network "private_network", ip: "192.168.56.104"
     vm.vm.provider "virtualbox" do |vb|
-      vb.memory = "3072"
+      vb.memory = "6144"
       vb.cpus = 2
       stabilize_virtualbox.call(vb)
     end

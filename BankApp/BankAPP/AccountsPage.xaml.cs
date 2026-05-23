@@ -18,6 +18,7 @@ namespace BankAPP
             IServiceProvider serviceProvider)
         {
             InitializeComponent();
+            NavigationPage.SetHasNavigationBar(this, false);
 
             _movementApiService = movementApiService;
             _accountApiService = accountApiService;
@@ -36,7 +37,7 @@ namespace BankAPP
             var movements = await _movementApiService.GetMyMovementsAsync();
 
             AccountsCollection.ItemsSource = accounts;
-            WelcomeLabel.Text = $"Hello, {SessionManager.CurrentUsername}!";
+            WelcomeLabel.Text = $"Здравей, {SessionManager.CurrentUsername}!";
             LoadSummary(accounts, movements);
         }
 
@@ -49,6 +50,14 @@ namespace BankAPP
             BalanceLabel.Text = totalBalance.ToString("F2");
             IncomeLabel.Text = totalCredit.ToString("F2");
             ExpenseLabel.Text = totalDebit.ToString("F2");
+
+            BalanceLabelAlt.Text = totalBalance.ToString("F2");
+            IncomeLabelAlt.Text = totalCredit.ToString("F2");
+            ExpenseLabelAlt.Text = totalDebit.ToString("F2");
+
+            var username = SessionManager.CurrentUsername ?? "?";
+            AvatarLabel.Text = username.Length > 0 ? username[0].ToString().ToUpper() : "?";
+            SidebarUsernameLabel.Text = username;
         }
 
         private async void OnRefreshClicked(object sender, EventArgs e)
@@ -59,9 +68,7 @@ namespace BankAPP
         private async void OnLogoutClicked(object sender, EventArgs e)
         {
             bool confirm = await DisplayAlert("Logout", "Do you want to log out?", "Yes", "No");
-
-            if (!confirm)
-                return;
+            if (!confirm) return;
 
             SessionManager.Logout();
 
@@ -84,8 +91,7 @@ namespace BankAPP
         private async void OnCreateAccountClicked(object sender, EventArgs e)
         {
             bool confirm = await DisplayAlert("Create Account", "Create a new account?", "Yes", "No");
-            if (!confirm)
-                return;
+            if (!confirm) return;
 
             var newAccount = await _accountApiService.CreateAccountAsync();
             if (newAccount == null)
@@ -96,6 +102,16 @@ namespace BankAPP
 
             await DisplayAlert("Success", $"Account created: {newAccount.Iban}", "OK");
             await LoadDataAsync();
+        }
+
+        private void OnNavigateToTransfers(object sender, EventArgs e)
+        {
+            ((AppShell)Shell.Current).NavigateTo("Transfers");
+        }
+
+        private void OnNavigateToPayments(object sender, EventArgs e)
+        {
+            ((AppShell)Shell.Current).NavigateTo("Payments");
         }
     }
 }

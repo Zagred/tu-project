@@ -1,4 +1,4 @@
-﻿using BankAPP.Shared.DTOs;
+using BankAPP.Shared.DTOs;
 using System.Net.Http.Json;
 
 namespace BankAPP.Services
@@ -14,24 +14,46 @@ namespace BankAPP.Services
 
         public async Task<LoginResponse?> LoginAsync(string username, string password)
         {
-            var request = new LoginRequest
+            try
             {
-                Username = username,
-                Password = password
-            };
+                var request = new LoginRequest
+                {
+                    Username = username,
+                    Password = password
+                };
 
-            var response = await _httpClient.PostAsJsonAsync("api/users/login", request);
+                var response = await _httpClient.PostAsJsonAsync("api/users/login", request);
 
-            if (!response.IsSuccessStatusCode)
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                return await response.Content.ReadFromJsonAsync<LoginResponse>();
+            }
+            catch (HttpRequestException)
+            {
                 return null;
-
-            return await response.Content.ReadFromJsonAsync<LoginResponse>();
+            }
+            catch (TaskCanceledException)
+            {
+                return null;
+            }
         }
 
         public async Task<bool> RegisterAsync(RegisterRequest request)
         {
-            var response = await _httpClient.PostAsJsonAsync("api/users/register", request);
-            return response.IsSuccessStatusCode;
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/users/register", request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (HttpRequestException)
+            {
+                return false;
+            }
+            catch (TaskCanceledException)
+            {
+                return false;
+            }
         }
     }
 }

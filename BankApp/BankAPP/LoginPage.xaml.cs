@@ -30,7 +30,7 @@ namespace BankAPP
 
             if (loginResponse == null)
             {
-                await DisplayAlert("Error", "Invalid credentials", "OK");
+                await DisplayAlert("Error", "Invalid credentials or API is not reachable.", "OK");
                 return;
             }
 

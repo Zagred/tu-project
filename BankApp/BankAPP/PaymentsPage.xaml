@@ -60,7 +60,21 @@
                     <Label Text="Direct transaction creation is disabled for regular users. Use the Transfers page to submit transfer requests. Admin POS terminal actions are handled separately." />
                 </VerticalStackLayout>
             </Frame>
+            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="AI Financial Assistant"
+               FontSize="22"
+               FontAttributes="Bold" />
 
+                    <Label Text="Generate advice based on your payments."
+               Opacity="0.7" />
+
+                    <Button Text="Generate AI Advice"
+                CornerRadius="12"
+                HeightRequest="48"
+                Clicked="OnAiAdviceClicked" />
+                </VerticalStackLayout>
+            </Frame>
             <!-- PAYMENTS LIST -->
             <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
                 <VerticalStackLayout Spacing="12">

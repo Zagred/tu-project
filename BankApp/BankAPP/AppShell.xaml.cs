@@ -16,7 +16,26 @@ namespace BankAPP
 
         private void RefreshAdminVisibility()
         {
-            AdminTab.IsVisible = Services.SessionManager.IsAdmin;
+            AdminShell.IsVisible = Services.SessionManager.IsAdmin;
+        }
+
+        public void NavigateTo(string route)
+        {
+            switch (route)
+            {
+                case "Transfers":
+                    CurrentItem = TransfersShell;
+                    break;
+                case "Payments":
+                    CurrentItem = PaymentsShell;
+                    break;
+                case "Accounts":
+                    CurrentItem = AccountsShell;
+                    break;
+                case "Admin":
+                    CurrentItem = AdminShell;
+                    break;
+            }
         }
     }
 }

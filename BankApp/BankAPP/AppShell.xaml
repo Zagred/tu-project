@@ -4,21 +4,27 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:BankAPP"
-    Title="BankAPP">
+    Title="BankAPP"
+    Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False">
 
-    <TabBar>
-        <Tab Title="Accounts">
-            <ShellContent ContentTemplate="{DataTemplate local:AccountsPage}" />
-        </Tab>
-        <Tab Title="Transfers">
-            <ShellContent ContentTemplate="{DataTemplate local:TransfersPage}" />
-        </Tab>
-        <Tab Title="Payments">
-            <ShellContent ContentTemplate="{DataTemplate local:PaymentsPage}" />
-        </Tab>
-        <Tab x:Name="AdminTab" Title="Admin">
-            <ShellContent ContentTemplate="{DataTemplate local:AdminPage}" />
-        </Tab>
-    </TabBar>
+    <FlyoutItem FlyoutDisplayOptions="AsMultipleItems">
+        <ShellContent x:Name="AccountsShell"
+                      Route="Accounts"
+                      Title="Accounts"
+                      ContentTemplate="{DataTemplate local:AccountsPage}" />
+        <ShellContent x:Name="TransfersShell"
+                      Route="Transfers"
+                      Title="Transfers"
+                      ContentTemplate="{DataTemplate local:TransfersPage}" />
+        <ShellContent x:Name="PaymentsShell"
+                      Route="Payments"
+                      Title="Payments"
+                      ContentTemplate="{DataTemplate local:PaymentsPage}" />
+        <ShellContent x:Name="AdminShell"
+                      Route="Admin"
+                      Title="Admin"
+                      ContentTemplate="{DataTemplate local:AdminPage}" />
+    </FlyoutItem>
 
 </Shell>
