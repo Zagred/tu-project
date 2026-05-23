@@ -2,6 +2,7 @@
 @inject ApiAuthService AuthService
 @inject AccountApiService AccountService
 @inject MovementApiService MovementService
+@inject AssistantApiService AssistantService
 
 <PageTitle>Payments</PageTitle>
 
@@ -19,8 +20,24 @@ else
             <h1>Payments</h1>
             <p class="text-muted">All payments with filters by month, category, type, account and status.</p>
         </div>
-        <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
+        <div class="actions">
+            <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
+            <button class="btn btn-outline-secondary" type="button" @onclick="LoadAdviceAsync">AI Advice</button>
+        </div>
     </div>
+
+    @if (isAdviceLoading)
+    {
+        <p class="alert alert-info">Generating financial advice...</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(aiAdvice))
+    {
+        <section class="tool-panel">
+            <h2>AI Financial Assistant</h2>
+            <p>@aiAdvice</p>
+        </section>
+    }
 
     <section class="metrics">
         <div class="metric"><span>Total Spent</span><strong class="amount-negative">@totalSpent.ToString("F2") BGN</strong></div>
@@ -149,6 +166,18 @@ else
     private int selectedAccountId;
     private decimal totalSpent;
     private decimal totalIncome;
+    private string aiAdvice = "";
+    private bool isAdviceLoading;
+
+    private async Task LoadAdviceAsync()
+    {
+        isAdviceLoading = true;
+        aiAdvice = "";
+
+        aiAdvice = await AssistantService.GetAdviceAsync();
+
+        isAdviceLoading = false;
+    }
 
     protected override async Task OnInitializedAsync()
     {

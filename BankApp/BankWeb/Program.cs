@@ -23,6 +23,7 @@ builder.Services.AddScoped<AccountApiService>();
 builder.Services.AddScoped<MovementApiService>();
 builder.Services.AddScoped<TransferApiService>();
 builder.Services.AddScoped<AdminApiService>();
+builder.Services.AddScoped<AssistantApiService>();
 
 var app = builder.Build();
 
