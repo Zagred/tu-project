@@ -16,6 +16,12 @@ services:
       DOTNET_PRINT_TELEMETRY_MESSAGE: "false"
       ConnectionStrings__DefaultConnection: "${BANKAPP_DB_CONNECTION_STRING:?BANKAPP_DB_CONNECTION_STRING is required}"
       Ollama__BaseAddress: "${BANKAPP_OLLAMA_BASE_ADDRESS:-http://host.docker.internal:11434/}"
+      EmailSettings__SmtpServer: "${BANKAPP_EMAIL_SMTP_SERVER:-smtp.gmail.com}"
+      EmailSettings__Port: "${BANKAPP_EMAIL_PORT:-587}"
+      EmailSettings__SenderName: "${BANKAPP_EMAIL_SENDER_NAME:-BankAPP}"
+      EmailSettings__SenderEmail: "${BANKAPP_EMAIL_SENDER_EMAIL:-}"
+      EmailSettings__Username: "${BANKAPP_EMAIL_USERNAME:-}"
+      EmailSettings__Password: "${BANKAPP_EMAIL_PASSWORD:-}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

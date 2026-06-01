@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="BankAPI/BankAPI.csproj" Id="750a560b-f182-4308-99ca-100e7d05992c" />
+  <Project Path="BankAPI.Tests/BankAPI.Tests.csproj" />
   <Project Path="BankAPP.Shared/BankAPP.Shared.csproj" Id="cec2db39-d08d-400e-b926-b315dc5fe553" />
   <Project Path="BankAPP/BankAPP.csproj" />
   <Project Path="BankWeb/BankWeb.csproj" Id="c3fe1db2-fc70-4cde-86e6-dbcb6d4b32f4" />

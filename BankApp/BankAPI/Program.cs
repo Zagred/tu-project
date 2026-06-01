@@ -1,4 +1,5 @@
 using System.Text;
+using BankAPI.Models;
 using BankAPI.Services;
 using BankAPP.Shared.Data;
 using BankAPP.Shared.Models;
@@ -58,6 +59,9 @@ builder.Services.AddHttpClient<OllamaAdviceService>(client =>
     var baseAddress = builder.Configuration["Ollama:BaseAddress"] ?? "http://localhost:11434/";
     client.BaseAddress = new Uri(baseAddress);
 });
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 

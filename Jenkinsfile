@@ -75,12 +75,36 @@ REMOTE_SCRIPT
       }
     }
 
+    stage('Unit Tests') {
+      steps {
+        sh '''
+          set -e
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
+            "PROJECT_DIR='$PROJECT_DIR' PUBLISH_ROOT='$PUBLISH_ROOT' CONFIGURATION='$CONFIGURATION' bash -s" <<'REMOTE_SCRIPT'
+set -e
+cd "$PROJECT_DIR"
+rm -rf "$PUBLISH_ROOT/test-results"
+mkdir -p "$PUBLISH_ROOT/test-results/coverage"
+
+dotnet restore BankAPI.Tests/BankAPI.Tests.csproj
+dotnet test BankAPI.Tests/BankAPI.Tests.csproj \
+  -c "$CONFIGURATION" \
+  --logger "trx;LogFileName=bankapi-tests.trx" \
+  --results-directory "$PUBLISH_ROOT/test-results" \
+  /p:CollectCoverage=true \
+  /p:CoverletOutput="$PUBLISH_ROOT/test-results/coverage/coverage" \
+  /p:CoverletOutputFormat=opencover
+REMOTE_SCRIPT
+        '''
+      }
+    }
+
     stage('SonarQube') {
       steps {
         sh '''
           set -e
           sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
-            "PROJECT_DIR='$PROJECT_DIR' CONFIGURATION='$CONFIGURATION' SONAR_HOST_URL='http://$SONAR_HOST:$SONAR_PORT' SONAR_PROJECT_KEY='$SONAR_PROJECT_KEY' SONAR_TOKEN='$SONAR_TOKEN' bash -s" <<'REMOTE_SCRIPT'
+            "PROJECT_DIR='$PROJECT_DIR' PUBLISH_ROOT='$PUBLISH_ROOT' CONFIGURATION='$CONFIGURATION' SONAR_HOST_URL='http://$SONAR_HOST:$SONAR_PORT' SONAR_PROJECT_KEY='$SONAR_PROJECT_KEY' SONAR_TOKEN='$SONAR_TOKEN' bash -s" <<'REMOTE_SCRIPT'
 set -e
 cd "$PROJECT_DIR"
 export PATH="$PATH:/home/vagrant/.dotnet/tools"
@@ -90,10 +114,14 @@ dotnet sonarscanner begin \
   /n:"Bank Web API" \
   /d:sonar.host.url="$SONAR_HOST_URL" \
   /d:sonar.token="$SONAR_TOKEN" \
-  /d:sonar.exclusions="**/bin/**,**/obj/**"
+  /d:sonar.exclusions="**/bin/**,**/obj/**,**/wwwroot/lib/**" \
+  /d:sonar.coverage.exclusions="**/*Tests*/**,**/Program.cs,**/Migrations/**" \
+  /d:sonar.cs.vstest.reportsPaths="$PUBLISH_ROOT/test-results/bankapi-tests.trx" \
+  /d:sonar.cs.opencover.reportsPaths="$PUBLISH_ROOT/test-results/coverage/coverage.opencover.xml"
 
 dotnet build BankAPI/BankAPI.csproj -c "$CONFIGURATION" --no-restore
 dotnet build BankWeb/BankWeb.csproj -c "$CONFIGURATION" --no-restore
+dotnet build BankAPI.Tests/BankAPI.Tests.csproj -c "$CONFIGURATION" --no-restore
 dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 REMOTE_SCRIPT
         '''

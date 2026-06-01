@@ -73,6 +73,11 @@
                 CornerRadius="12"
                 HeightRequest="48"
                 Clicked="OnAiAdviceClicked" />
+
+                    <Button Text="Email Monthly Report"
+                CornerRadius="12"
+                HeightRequest="48"
+                Clicked="OnEmailReportClicked" />
                 </VerticalStackLayout>
             </Frame>
             <!-- PAYMENTS LIST -->

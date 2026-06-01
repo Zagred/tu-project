@@ -24,6 +24,7 @@ builder.Services.AddScoped<MovementApiService>();
 builder.Services.AddScoped<TransferApiService>();
 builder.Services.AddScoped<AdminApiService>();
 builder.Services.AddScoped<AssistantApiService>();
+builder.Services.AddScoped<BudgetReportApiService>();
 
 var app = builder.Build();
 

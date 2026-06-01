@@ -3,6 +3,7 @@
 @inject AccountApiService AccountService
 @inject MovementApiService MovementService
 @inject AssistantApiService AssistantService
+@inject BudgetReportApiService BudgetReportService
 
 <PageTitle>Payments</PageTitle>
 
@@ -23,8 +24,16 @@ else
         <div class="actions">
             <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
             <button class="btn btn-outline-secondary" type="button" @onclick="LoadAdviceAsync">AI Advice</button>
+            <button class="btn btn-primary" type="button" disabled="@isReportSending" @onclick="SendMonthlyReportAsync">
+                @(isReportSending ? "Sending..." : "Email report")
+            </button>
         </div>
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(reportMessage))
+    {
+        <p class="alert @reportMessageClass">@reportMessage</p>
+    }
 
     @if (isAdviceLoading)
     {
@@ -168,6 +177,9 @@ else
     private decimal totalIncome;
     private string aiAdvice = "";
     private bool isAdviceLoading;
+    private string reportMessage = "";
+    private string reportMessageClass = "alert-success";
+    private bool isReportSending;
 
     private async Task LoadAdviceAsync()
     {
@@ -177,6 +189,20 @@ else
         aiAdvice = await AssistantService.GetAdviceAsync();
 
         isAdviceLoading = false;
+    }
+
+    private async Task SendMonthlyReportAsync()
+    {
+        isReportSending = true;
+        reportMessage = "";
+
+        var message = await BudgetReportService.SendMonthlyReportAsync();
+        reportMessage = message;
+        reportMessageClass = message.Contains("success", StringComparison.OrdinalIgnoreCase)
+            ? "alert-success"
+            : "alert-danger";
+
+        isReportSending = false;
     }
 
     protected override async Task OnInitializedAsync()

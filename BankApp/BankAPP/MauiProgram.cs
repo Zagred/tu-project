@@ -44,6 +44,7 @@ namespace BankAPP
             builder.Services.AddTransient<AdminPage>();
             builder.Services.AddTransient<AppShell>();
             builder.Services.AddTransient<AssistantApiService>();
+            builder.Services.AddTransient<BudgetReportApiService>();
 
             return builder.Build();
         }
