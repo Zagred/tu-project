@@ -3,11 +3,11 @@ pipeline {
 
   environment {
     REPO_URL    = 'https://github.com/Zagred/tu-project.git'
-    REPO_BRANCH = 'main'
+    REPO_BRANCH = 'prod'
 
-    REMOTE_ROOT  = '/home/vagrant/tu-project'
-    PROJECT_DIR  = '/home/vagrant/tu-project/BankApp'
-    PUBLISH_ROOT = '/tmp/bankapp-publish'
+    REMOTE_ROOT  = '/home/vagrant/tu-project-prod'
+    PROJECT_DIR  = '/home/vagrant/tu-project-prod/BankApp'
+    PUBLISH_ROOT = '/tmp/bankapp-prod-publish'
     SSH_OPTS     = '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o PreferredAuthentications=password -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1'
 
     CONFIGURATION        = 'Release'
@@ -195,9 +195,9 @@ REMOTE_SCRIPT
           sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
             "PUBLISH_ROOT='$PUBLISH_ROOT' BUILD_NUMBER='$BUILD_NUMBER' NEXUS_URL='http://$NEXUS_HOST:$NEXUS_PORT' NEXUS_REPOSITORY='$NEXUS_REPOSITORY' NEXUS_USER='$NEXUS_CREDS_USR' NEXUS_PASS='$NEXUS_CREDS_PSW' bash -s" <<'REMOTE_SCRIPT'
 set -e
-curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankapi-$BUILD_NUMBER.tar.gz" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/web-api/$BUILD_NUMBER/bankapi-$BUILD_NUMBER.tar.gz"
-curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankweb-$BUILD_NUMBER.tar.gz" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/web-api/$BUILD_NUMBER/bankweb-$BUILD_NUMBER.tar.gz"
-curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankapp-mobile-$BUILD_NUMBER.apk" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/mobile/$BUILD_NUMBER/bankapp-mobile-$BUILD_NUMBER.apk"
+curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankapi-$BUILD_NUMBER.tar.gz" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/prod/web-api/$BUILD_NUMBER/bankapi-$BUILD_NUMBER.tar.gz"
+curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankweb-$BUILD_NUMBER.tar.gz" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/prod/web-api/$BUILD_NUMBER/bankweb-$BUILD_NUMBER.tar.gz"
+curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankapp-mobile-$BUILD_NUMBER.apk" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/prod/mobile/$BUILD_NUMBER/bankapp-mobile-$BUILD_NUMBER.apk"
 REMOTE_SCRIPT
         '''
       }
