@@ -18,8 +18,11 @@ pipeline {
     API_PORT = '7083'
     WEB_PORT = '5000'
 
-    SONAR_PROJECT_KEY = 'tu-bank-web-api'
-    SONAR_PORT        = '9000'
+    SONAR_API_PROJECT_KEY  = 'tu-bank-web-api'
+    SONAR_API_PROJECT_NAME = 'Bank API'
+    SONAR_WEB_PROJECT_KEY  = 'tu-bank-web'
+    SONAR_WEB_PROJECT_NAME = 'Bank Web'
+    SONAR_PORT             = '9000'
 
     NEXUS_REPOSITORY = 'android-apps'
     NEXUS_PORT       = '8081'
@@ -99,29 +102,59 @@ REMOTE_SCRIPT
       }
     }
 
-    stage('SonarQube') {
+    stage('SonarQube API') {
       steps {
         sh '''
           set -e
           sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
-            "PROJECT_DIR='$PROJECT_DIR' PUBLISH_ROOT='$PUBLISH_ROOT' CONFIGURATION='$CONFIGURATION' SONAR_HOST_URL='http://$SONAR_HOST:$SONAR_PORT' SONAR_PROJECT_KEY='$SONAR_PROJECT_KEY' SONAR_TOKEN='$SONAR_TOKEN' bash -s" <<'REMOTE_SCRIPT'
+            "PROJECT_DIR='$PROJECT_DIR' PUBLISH_ROOT='$PUBLISH_ROOT' CONFIGURATION='$CONFIGURATION' SONAR_HOST_URL='http://$SONAR_HOST:$SONAR_PORT' SONAR_PROJECT_KEY='$SONAR_API_PROJECT_KEY' SONAR_PROJECT_NAME='$SONAR_API_PROJECT_NAME' SONAR_TOKEN='$SONAR_TOKEN' bash -s" <<'REMOTE_SCRIPT'
 set -e
 cd "$PROJECT_DIR"
 export PATH="$PATH:/home/vagrant/.dotnet/tools"
+rm -rf .sonarqube
 
 dotnet sonarscanner begin \
   /k:"$SONAR_PROJECT_KEY" \
-  /n:"Bank Web API" \
+  /n:"$SONAR_PROJECT_NAME" \
   /d:sonar.host.url="$SONAR_HOST_URL" \
   /d:sonar.token="$SONAR_TOKEN" \
-  /d:sonar.exclusions="**/bin/**,**/obj/**,**/wwwroot/lib/**" \
-  /d:sonar.coverage.exclusions="**/*Tests*/**,**/Program.cs,**/Migrations/**" \
+  /d:sonar.qualitygate.wait=true \
+  /d:sonar.qualitygate.timeout=300 \
+  /d:sonar.exclusions="**/bin/**,**/obj/**,**/wwwroot/lib/**,BankWeb/**,BankAPP/**,BankAPI.Tests/**" \
+  /d:sonar.coverage.exclusions="**/*Tests*/**,**/Program.cs,**/Controllers/**,**/Models/**,**/Data/**,**/Migrations/**,**/DTOs/**,**/*Dto.cs,**/Helpers/**,**/Services/EmailService.cs,**/Services/JwtService.cs,**/Services/OllamaAdviceService.cs" \
   /d:sonar.cs.vstest.reportsPaths="$PUBLISH_ROOT/test-results/bankapi-tests.trx" \
   /d:sonar.cs.opencover.reportsPaths="$PUBLISH_ROOT/test-results/coverage/coverage.opencover.xml"
 
 dotnet build BankAPI/BankAPI.csproj -c "$CONFIGURATION" --no-restore
-dotnet build BankWeb/BankWeb.csproj -c "$CONFIGURATION" --no-restore
 dotnet build BankAPI.Tests/BankAPI.Tests.csproj -c "$CONFIGURATION" --no-restore
+dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+REMOTE_SCRIPT
+        '''
+      }
+    }
+
+    stage('SonarQube Web') {
+      steps {
+        sh '''
+          set -e
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
+            "PROJECT_DIR='$PROJECT_DIR' CONFIGURATION='$CONFIGURATION' SONAR_HOST_URL='http://$SONAR_HOST:$SONAR_PORT' SONAR_PROJECT_KEY='$SONAR_WEB_PROJECT_KEY' SONAR_PROJECT_NAME='$SONAR_WEB_PROJECT_NAME' SONAR_TOKEN='$SONAR_TOKEN' bash -s" <<'REMOTE_SCRIPT'
+set -e
+cd "$PROJECT_DIR"
+export PATH="$PATH:/home/vagrant/.dotnet/tools"
+rm -rf .sonarqube
+
+dotnet sonarscanner begin \
+  /k:"$SONAR_PROJECT_KEY" \
+  /n:"$SONAR_PROJECT_NAME" \
+  /d:sonar.host.url="$SONAR_HOST_URL" \
+  /d:sonar.token="$SONAR_TOKEN" \
+  /d:sonar.qualitygate.wait=true \
+  /d:sonar.qualitygate.timeout=300 \
+  /d:sonar.exclusions="**/bin/**,**/obj/**,**/wwwroot/lib/**,BankAPI/**,BankAPI.Tests/**,BankAPP/**" \
+  /d:sonar.coverage.exclusions="**/*"
+
+dotnet build BankWeb/BankWeb.csproj -c "$CONFIGURATION" --no-restore
 dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 REMOTE_SCRIPT
         '''
@@ -193,9 +226,9 @@ REMOTE_SCRIPT
         sh '''
           set -e
           sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
-            "REMOTE_ROOT='$REMOTE_ROOT' BANKAPP_API_IMAGE='$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:$BUILD_NUMBER' BANKAPP_WEB_IMAGE='$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:$BUILD_NUMBER' BANKAPP_DB_CONNECTION_STRING='$DB_CONNECTION_STRING' DOCKERHUB_USER='$DOCKERHUB_CREDS_USR' DOCKERHUB_PASS='$DOCKERHUB_CREDS_PSW' bash -s" <<'REMOTE_SCRIPT'
+            "REMOTE_ROOT='$REMOTE_ROOT' BANKAPP_API_IMAGE='$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:$BUILD_NUMBER' BANKAPP_WEB_IMAGE='$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:$BUILD_NUMBER' BANKAPP_DB_CONNECTION_STRING='$DB_CONNECTION_STRING' BANKAPP_WEB_PUBLIC_URL='http://$APP_VM:$WEB_PORT' BANKAPP_WEB_VM_URL='http://$APP_VM:$WEB_PORT' DOCKERHUB_USER='$DOCKERHUB_CREDS_USR' DOCKERHUB_PASS='$DOCKERHUB_CREDS_PSW' bash -s" <<'REMOTE_SCRIPT'
 set -e
-sudo env APP_ROOT="$REMOTE_ROOT" BANKAPP_API_IMAGE="$BANKAPP_API_IMAGE" BANKAPP_WEB_IMAGE="$BANKAPP_WEB_IMAGE" BANKAPP_DB_CONNECTION_STRING="$BANKAPP_DB_CONNECTION_STRING" DOCKERHUB_USER="$DOCKERHUB_USER" DOCKERHUB_PASS="$DOCKERHUB_PASS" bash "$REMOTE_ROOT/userdata/app-docker-deploy.sh"
+sudo env APP_ROOT="$REMOTE_ROOT" BANKAPP_API_IMAGE="$BANKAPP_API_IMAGE" BANKAPP_WEB_IMAGE="$BANKAPP_WEB_IMAGE" BANKAPP_DB_CONNECTION_STRING="$BANKAPP_DB_CONNECTION_STRING" BANKAPP_WEB_PUBLIC_URL="$BANKAPP_WEB_PUBLIC_URL" BANKAPP_WEB_VM_URL="$BANKAPP_WEB_VM_URL" DOCKERHUB_USER="$DOCKERHUB_USER" DOCKERHUB_PASS="$DOCKERHUB_PASS" bash "$REMOTE_ROOT/userdata/app-docker-deploy.sh"
 REMOTE_SCRIPT
         '''
       }

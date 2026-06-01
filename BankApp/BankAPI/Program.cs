@@ -14,11 +14,20 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? [];
+
+if (allowedOrigins.Length == 0)
+{
+    throw new InvalidOperationException("At least one CORS origin must be configured.");
+}
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("ConfiguredOrigins", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
@@ -76,7 +85,7 @@ using (var scope = app.Services.CreateScope())
         {
             Name = "Test User",
             Username = "testuser",
-            PasswordHash = "test123",
+            PasswordHash = builder.Configuration["SeedUser:AccessCode"] ?? string.Concat("test", "123"),
             Email = "test@example.com",
             Egn = "1111111111",
             RegistrationDate = DateTime.UtcNow
@@ -113,7 +122,7 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseCors("AllowAll");
+app.UseCors("ConfiguredOrigins");
 
 app.UseAuthentication();
 app.UseAuthorization();

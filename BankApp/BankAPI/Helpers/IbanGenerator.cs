@@ -1,16 +1,16 @@
-﻿namespace BankAPI.Helpers
+using System.Security.Cryptography;
+
+namespace BankAPI.Helpers
 {
     public static class IbanGenerator
     {
         public static string Generate()
         {
-            var random = new Random();
-
             string country = "BG";
             string bankCode = "BANK"; // demo
-            string accountNumber = random.Next(10000000, 99999999).ToString();
+            string accountNumber = RandomNumberGenerator.GetInt32(10_000_000, 100_000_000).ToString();
 
-            return $"{country}{random.Next(10, 99)}{bankCode}{accountNumber}";
+            return $"{country}{RandomNumberGenerator.GetInt32(10, 100)}{bankCode}{accountNumber}";
         }
     }
 }

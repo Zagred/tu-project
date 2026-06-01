@@ -56,7 +56,6 @@ namespace BankAPI.Controllers
         [HttpPost("me")]
         public async Task<IActionResult> AddMyMovement(CreateMovementRequest request)
         {
-            var userId = GetUserId();
             var userName = GetUserName();
             var isAdmin = string.Equals(userName, "admin", StringComparison.OrdinalIgnoreCase);
 

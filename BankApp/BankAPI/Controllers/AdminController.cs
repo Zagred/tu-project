@@ -4,6 +4,7 @@ using BankAPP.Shared.DTOs;
 using BankAPP.Shared.Data;
 using BankAPP.Shared.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace BankAPI.Controllers
 {
@@ -83,7 +84,7 @@ namespace BankAPI.Controllers
                 _context.Accounts.Update(account);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Admin {userName} created POS transaction: {movement.MovementId}");
+                _logger.LogInformation("Admin {UserName} created POS transaction: {MovementId}", userName, movement.MovementId);
 
                 return Ok(new { 
                     success = true, 
@@ -284,8 +285,7 @@ namespace BankAPI.Controllers
 
         private static string GenerateMaskedCardNumber()
         {
-            var random = new Random();
-            var last4 = random.Next(1000, 10000);
+            var last4 = RandomNumberGenerator.GetInt32(1000, 10000);
             return $"**** **** **** {last4}";
         }
 
@@ -379,7 +379,7 @@ namespace BankAPI.Controllers
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Admin {userName} approved transfer {movementId}");
+                _logger.LogInformation("Admin {UserName} approved transfer {MovementId}", userName, movementId);
 
                 return Ok(new { success = true, message = "Transfer approved and completed" });
             }
@@ -426,7 +426,7 @@ namespace BankAPI.Controllers
                 _context.Movements.Update(debitMovement);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Admin {userName} rejected transfer {movementId}");
+                _logger.LogInformation("Admin {UserName} rejected transfer {MovementId}", userName, movementId);
 
                 return Ok(new { success = true, message = "Transfer rejected" });
             }
