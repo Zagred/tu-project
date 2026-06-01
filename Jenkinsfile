@@ -3,20 +3,17 @@ pipeline {
 
   environment {
     REPO_URL    = 'https://github.com/Zagred/tu-project.git'
-    REPO_BRANCH = 'main'
+    REPO_BRANCH = 'test'
 
-    REMOTE_ROOT  = '/home/vagrant/tu-project'
-    PROJECT_DIR  = '/home/vagrant/tu-project/BankApp'
-    PUBLISH_ROOT = '/tmp/bankapp-publish'
+    REMOTE_ROOT  = '/home/vagrant/tu-project-test'
+    PROJECT_DIR  = '/home/vagrant/tu-project-test/BankApp'
+    PUBLISH_ROOT = '/tmp/bankapp-test-publish'
     SSH_OPTS     = '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o PreferredAuthentications=password -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1'
 
     CONFIGURATION        = 'Release'
     MOBILE_CONFIGURATION = 'Debug'
     ANDROID_TFM          = 'net10.0-android'
     ANDROID_SDK_DIR      = '/opt/android-sdk'
-
-    API_PORT = '7083'
-    WEB_PORT = '5000'
 
     SONAR_API_PROJECT_KEY  = 'tu-bank-web-api'
     SONAR_API_PROJECT_NAME = 'Bank API'
@@ -27,17 +24,12 @@ pipeline {
     NEXUS_REPOSITORY = 'android-apps'
     NEXUS_PORT       = '8081'
 
-    DOCKER_API_IMAGE = 'bankapp-api'
-    DOCKER_WEB_IMAGE = 'bankapp-web'
-
-    APP_VM               = credentials('bankapp-app-vm-host')
-    SONAR_HOST           = credentials('bankapp-sonar-host')
-    NEXUS_HOST           = credentials('bankapp-nexus-host')
-    VAGRANT_CREDS        = credentials('vagrant-login')
-    NEXUS_CREDS          = credentials('nexus-login')
-    SONAR_TOKEN          = credentials('sonartoken')
-    DOCKERHUB_CREDS      = credentials('docker-hub-credentials')
-    DB_CONNECTION_STRING = credentials('bankapp-db-connection-string')
+    APP_VM          = credentials('bankapp-app-vm-host')
+    SONAR_HOST      = credentials('bankapp-sonar-host')
+    NEXUS_HOST      = credentials('bankapp-nexus-host')
+    VAGRANT_CREDS   = credentials('vagrant-login')
+    NEXUS_CREDS     = credentials('nexus-login')
+    SONAR_TOKEN     = credentials('sonartoken')
   }
 
   stages {
@@ -173,7 +165,7 @@ export ANDROID_HOME="$ANDROID_SDK_DIR"
 export ANDROID_SDK_ROOT="$ANDROID_SDK_DIR"
 export PATH="$PATH:$ANDROID_SDK_DIR/platform-tools:$ANDROID_SDK_DIR/cmdline-tools/latest/bin"
 
-rm -rf "$PUBLISH_ROOT"
+rm -rf "$PUBLISH_ROOT/api" "$PUBLISH_ROOT/web" "$PUBLISH_ROOT/artifacts"
 mkdir -p "$PUBLISH_ROOT/api" "$PUBLISH_ROOT/web" "$PUBLISH_ROOT/artifacts"
 
 dotnet publish BankAPI/BankAPI.csproj -c "$CONFIGURATION" --no-restore -o "$PUBLISH_ROOT/api"
@@ -195,52 +187,10 @@ REMOTE_SCRIPT
           sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
             "PUBLISH_ROOT='$PUBLISH_ROOT' BUILD_NUMBER='$BUILD_NUMBER' NEXUS_URL='http://$NEXUS_HOST:$NEXUS_PORT' NEXUS_REPOSITORY='$NEXUS_REPOSITORY' NEXUS_USER='$NEXUS_CREDS_USR' NEXUS_PASS='$NEXUS_CREDS_PSW' bash -s" <<'REMOTE_SCRIPT'
 set -e
-curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankapi-$BUILD_NUMBER.tar.gz" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/web-api/$BUILD_NUMBER/bankapi-$BUILD_NUMBER.tar.gz"
-curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankweb-$BUILD_NUMBER.tar.gz" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/web-api/$BUILD_NUMBER/bankweb-$BUILD_NUMBER.tar.gz"
-curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankapp-mobile-$BUILD_NUMBER.apk" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/mobile/$BUILD_NUMBER/bankapp-mobile-$BUILD_NUMBER.apk"
+curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankapi-$BUILD_NUMBER.tar.gz" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/test/web-api/$BUILD_NUMBER/bankapi-$BUILD_NUMBER.tar.gz"
+curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankweb-$BUILD_NUMBER.tar.gz" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/test/web-api/$BUILD_NUMBER/bankweb-$BUILD_NUMBER.tar.gz"
+curl -fsS -u "$NEXUS_USER:$NEXUS_PASS" --upload-file "$PUBLISH_ROOT/artifacts/bankapp-mobile-$BUILD_NUMBER.apk" "$NEXUS_URL/repository/$NEXUS_REPOSITORY/test/mobile/$BUILD_NUMBER/bankapp-mobile-$BUILD_NUMBER.apk"
 REMOTE_SCRIPT
-        '''
-      }
-    }
-
-    stage('Docker Build and Push') {
-      steps {
-        sh '''
-          set -e
-          echo "$DOCKERHUB_CREDS_PSW" | docker login -u "$DOCKERHUB_CREDS_USR" --password-stdin
-
-          docker build -f docker/BankAPI.Dockerfile --build-arg APP_DIR=BankApp -t "$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:$BUILD_NUMBER" -t "$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:latest" .
-          docker build -f docker/BankWeb.Dockerfile --build-arg APP_DIR=BankApp -t "$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:$BUILD_NUMBER" -t "$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:latest" .
-
-          docker push "$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:$BUILD_NUMBER"
-          docker push "$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:latest"
-          docker push "$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:$BUILD_NUMBER"
-          docker push "$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:latest"
-          docker logout
-        '''
-      }
-    }
-
-    stage('Deploy') {
-      steps {
-        sh '''
-          set -e
-          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
-            "REMOTE_ROOT='$REMOTE_ROOT' BANKAPP_API_IMAGE='$DOCKERHUB_CREDS_USR/$DOCKER_API_IMAGE:$BUILD_NUMBER' BANKAPP_WEB_IMAGE='$DOCKERHUB_CREDS_USR/$DOCKER_WEB_IMAGE:$BUILD_NUMBER' BANKAPP_DB_CONNECTION_STRING='$DB_CONNECTION_STRING' BANKAPP_WEB_PUBLIC_URL='http://$APP_VM:$WEB_PORT' BANKAPP_WEB_VM_URL='http://$APP_VM:$WEB_PORT' DOCKERHUB_USER='$DOCKERHUB_CREDS_USR' DOCKERHUB_PASS='$DOCKERHUB_CREDS_PSW' bash -s" <<'REMOTE_SCRIPT'
-set -e
-sudo env APP_ROOT="$REMOTE_ROOT" BANKAPP_API_IMAGE="$BANKAPP_API_IMAGE" BANKAPP_WEB_IMAGE="$BANKAPP_WEB_IMAGE" BANKAPP_DB_CONNECTION_STRING="$BANKAPP_DB_CONNECTION_STRING" BANKAPP_WEB_PUBLIC_URL="$BANKAPP_WEB_PUBLIC_URL" BANKAPP_WEB_VM_URL="$BANKAPP_WEB_VM_URL" DOCKERHUB_USER="$DOCKERHUB_USER" DOCKERHUB_PASS="$DOCKERHUB_PASS" bash "$REMOTE_ROOT/userdata/app-docker-deploy.sh"
-REMOTE_SCRIPT
-        '''
-      }
-    }
-
-    stage('Smoke Test') {
-      steps {
-        sh '''
-          set -e
-          curl --retry 15 --retry-all-errors --retry-delay 2 --connect-timeout 5 -fsS "http://$APP_VM:$API_PORT/swagger/v1/swagger.json" >/dev/null
-          curl --retry 15 --retry-all-errors --retry-delay 2 --connect-timeout 5 -fsS "http://$APP_VM:$API_PORT/api/users/testuser" >/dev/null
-          curl --retry 15 --retry-all-errors --retry-delay 2 --connect-timeout 5 -fsS "http://$APP_VM:$WEB_PORT/" >/dev/null
         '''
       }
     }
@@ -248,7 +198,7 @@ REMOTE_SCRIPT
 
   post {
     success {
-      echo 'Web, API, mobile, Nexus upload, Docker push, and deployment completed.'
+      echo 'Test validation completed: build, tests, SonarQube, and Nexus artifacts passed.'
     }
   }
 }
