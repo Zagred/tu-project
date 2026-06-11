@@ -85,7 +85,18 @@ REMOTE_SCRIPT
             git fetch origin dev test
 
             git checkout -B test origin/test
-            git merge --no-ff origin/dev -m "Promote dev to test from Jenkins build $BUILD_NUMBER"
+            if ! git merge --no-ff origin/dev -m "Promote dev to test from Jenkins build $BUILD_NUMBER"; then
+              CONFLICTS="$(git diff --name-only --diff-filter=U)"
+              if [ "$CONFLICTS" = "Jenkinsfile" ]; then
+                git checkout --ours Jenkinsfile
+                git add Jenkinsfile
+                git commit --no-edit
+              else
+                echo "Unexpected merge conflicts:"
+                echo "$CONFLICTS"
+                exit 1
+              fi
+            fi
             git push origin test
           '''
         }
