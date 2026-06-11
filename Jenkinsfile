@@ -68,11 +68,34 @@ REMOTE_SCRIPT
         '''
       }
     }
+
+    stage('Promote to Test') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: 'github-credentials',
+          usernameVariable: 'GITHUB_USER',
+          passwordVariable: 'GITHUB_TOKEN'
+        )]) {
+          sh '''
+            set -e
+            git config user.email "jenkins@bankapp.local"
+            git config user.name "Jenkins"
+
+            git remote set-url origin "https://$GITHUB_USER:$GITHUB_TOKEN@github.com/Zagred/tu-project.git"
+            git fetch origin dev test
+
+            git checkout -B test origin/test
+            git merge --no-ff origin/dev -m "Promote dev to test from Jenkins build $BUILD_NUMBER"
+            git push origin test
+          '''
+        }
+      }
+    }
   }
 
   post {
     success {
-      echo 'Dev validation completed: API/Web build and unit tests passed.'
+      echo 'Dev validation completed and promoted to test.'
     }
   }
 }
