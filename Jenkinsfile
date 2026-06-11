@@ -81,7 +81,7 @@ REMOTE_SCRIPT
             git config user.email "jenkins@bankapp.local"
             git config user.name "Jenkins"
 
-            git remote set-url origin "https://$GITHUB_USER:$GITHUB_TOKEN@github.com/Zagred/tu-project.git"
+            git remote set-url origin "https://x-access-token:$GITHUB_TOKEN@github.com/Zagred/tu-project.git"
             git fetch origin dev test
 
             git checkout -B test origin/test
