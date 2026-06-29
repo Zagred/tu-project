@@ -1,7 +1,7 @@
-﻿using System.Security.Claims;
-using BankAPP.Shared.Data;
-using BankAPP.Shared.DTOs;
-using BankAPP.Shared.Models;
+using System.Security.Claims;
+using BankShared.Data;
+using BankShared.DTOs;
+using BankShared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -78,7 +78,7 @@ namespace BankAPI.Controllers
                 {
                     AccountId = fromAccount.Id,
                     Amount = request.Amount,
-                    MovementType = BankAPP.Shared.Constants.MovementTypes.Transfer,
+                    MovementType = BankShared.Constants.MovementTypes.Transfer,
                     Description = $"Transfer to account {toAccount.Id}: {request.Description}",
                     Currency = "BGN",
                     Status = "pending",  // Pending admin approval
@@ -91,7 +91,7 @@ namespace BankAPI.Controllers
                 {
                     AccountId = toAccount.Id,
                     Amount = request.Amount,
-                    MovementType = BankAPP.Shared.Constants.MovementTypes.Transfer,
+                    MovementType = BankShared.Constants.MovementTypes.Transfer,
                     Description = $"Transfer from account {fromAccount.Id}: {request.Description}",
                     Currency = "BGN",
                     Status = "pending",  // Pending admin approval

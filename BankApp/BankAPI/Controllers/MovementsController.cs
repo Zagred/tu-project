@@ -1,7 +1,7 @@
-﻿using System.Security.Claims;
-using BankAPP.Shared.Data;
-using BankAPP.Shared.DTOs;
-using BankAPP.Shared.Models;
+using System.Security.Claims;
+using BankShared.Data;
+using BankShared.DTOs;
+using BankShared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -80,9 +80,9 @@ namespace BankAPI.Controllers
 
             _context.Movements.Add(movement);
 
-            if (movement.MovementType == BankAPP.Shared.Constants.MovementTypes.Deposit)
+            if (movement.MovementType == BankShared.Constants.MovementTypes.Deposit)
                 account.Balance += movement.Amount;
-            else if (BankAPP.Shared.Constants.MovementTypes.IsExpense(movement.MovementType))
+            else if (BankShared.Constants.MovementTypes.IsExpense(movement.MovementType))
             {
                 if (account.Balance < movement.Amount)
                     return BadRequest(new { message = "Insufficient funds" });

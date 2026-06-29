@@ -1,10 +1,11 @@
 using System.Text;
 using BankAPI.Models;
 using BankAPI.Services;
-using BankAPP.Shared.Data;
-using BankAPP.Shared.Models;
+using BankShared.Data;
+using BankShared.Models;
 using BankAPI.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -39,6 +40,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         b => b.MigrationsAssembly("BankAPI")));
 
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -77,19 +79,24 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
     db.Database.EnsureCreated();
 
-    if (!db.Users.Any(u => u.Username == "testuser"))
+    var seedPassword = builder.Configuration["SeedUser:AccessCode"] ?? string.Concat("test", "123");
+    var existingTestUser = db.Users.FirstOrDefault(u => u.Username == "testuser");
+
+    if (existingTestUser == null)
     {
         var testUser = new User
         {
             Name = "Test User",
             Username = "testuser",
-            PasswordHash = builder.Configuration["SeedUser:AccessCode"] ?? string.Concat("test", "123"),
             Email = "test@example.com",
             Egn = "1111111111",
             RegistrationDate = DateTime.UtcNow
         };
+
+        testUser.PasswordHash = passwordHasher.HashPassword(testUser, seedPassword);
 
         db.Users.Add(testUser);
         db.SaveChanges();
@@ -112,6 +119,11 @@ using (var scope = app.Services.CreateScope())
         });
         db.SaveChanges();
     }
+    else if (ShouldRehashSeedPassword(existingTestUser, seedPassword, passwordHasher))
+    {
+        existingTestUser.PasswordHash = passwordHasher.HashPassword(existingTestUser, seedPassword);
+        db.SaveChanges();
+    }
 }
 
 app.UseSwagger();
@@ -130,3 +142,23 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static bool ShouldRehashSeedPassword(
+    User user,
+    string seedPassword,
+    IPasswordHasher<User> passwordHasher)
+{
+    try
+    {
+        var verificationResult = passwordHasher.VerifyHashedPassword(
+            user,
+            user.PasswordHash,
+            seedPassword);
+
+        return verificationResult == PasswordVerificationResult.SuccessRehashNeeded;
+    }
+    catch (FormatException)
+    {
+        return user.PasswordHash == seedPassword;
+    }
+}

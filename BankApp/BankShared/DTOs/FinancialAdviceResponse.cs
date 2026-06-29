@@ -1,4 +1,4 @@
-namespace BankAPP.Shared.DTOs
+namespace BankShared.DTOs
 {
     public class FinancialAdviceResponse
     {

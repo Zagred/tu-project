@@ -1,6 +1,6 @@
 using BankAPI.Services;
-using BankAPP.Shared.Constants;
-using BankAPP.Shared.Models;
+using BankShared.Constants;
+using BankShared.Models;
 using Xunit;
 
 namespace BankAPI.Tests

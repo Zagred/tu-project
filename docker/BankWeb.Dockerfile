@@ -3,11 +3,11 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 ARG APP_DIR=BankApp
 
-COPY ${APP_DIR}/BankAPP.Shared/BankAPP.Shared.csproj BankApp/BankAPP.Shared/
+COPY ${APP_DIR}/BankShared/BankShared.csproj BankApp/BankShared/
 COPY ${APP_DIR}/BankWeb/BankWeb.csproj BankApp/BankWeb/
 RUN dotnet restore BankApp/BankWeb/BankWeb.csproj
 
-COPY ${APP_DIR}/BankAPP.Shared/ BankApp/BankAPP.Shared/
+COPY ${APP_DIR}/BankShared/ BankApp/BankShared/
 COPY ${APP_DIR}/BankWeb/ BankApp/BankWeb/
 RUN dotnet publish BankApp/BankWeb/BankWeb.csproj -c Release --no-restore -o /app/publish /p:UseAppHost=false
 

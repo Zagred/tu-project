@@ -1,6 +1,6 @@
-using BankAPP.Shared.Constants;
-using BankAPP.Shared.DTOs;
-using BankAPP.Shared.Models;
+using BankShared.Constants;
+using BankShared.DTOs;
+using BankShared.Models;
 using System.Net.Http.Json;
 
 namespace BankAPP.Services

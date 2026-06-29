@@ -1,4 +1,4 @@
-using BankAPP.Shared.DTOs;
+using BankShared.DTOs;
 namespace BankWeb.Services
 {
     public class TransferApiService : AuthenticatedApiClient
