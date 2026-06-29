@@ -1,4 +1,4 @@
-using BankAPP.Shared.Constants;
+using BankShared.Constants;
 using Xunit;
 
 namespace BankAPI.Tests

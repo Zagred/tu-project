@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0-android</TargetFrameworks>
@@ -83,7 +83,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\BankAPP.Shared\BankAPP.Shared.csproj" />
+	  <ProjectReference Include="..\BankShared\BankShared.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

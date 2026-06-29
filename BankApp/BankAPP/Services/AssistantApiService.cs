@@ -1,6 +1,6 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using BankAPP.Shared.DTOs;
+using BankShared.DTOs;
 
 namespace BankAPP.Services
 {

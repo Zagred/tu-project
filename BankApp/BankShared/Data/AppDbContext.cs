@@ -1,7 +1,7 @@
-﻿using BankAPP.Shared.Models;
+using BankShared.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace BankAPP.Shared.Data
+namespace BankShared.Data
 {
     public class AppDbContext : DbContext
     {

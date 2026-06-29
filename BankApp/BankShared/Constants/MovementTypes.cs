@@ -1,4 +1,4 @@
-namespace BankAPP.Shared.Constants
+namespace BankShared.Constants
 {
     public static class MovementTypes
     {

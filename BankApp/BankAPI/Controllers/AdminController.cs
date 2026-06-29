@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using BankAPP.Shared.DTOs;
-using BankAPP.Shared.Data;
-using BankAPP.Shared.Models;
+using BankShared.DTOs;
+using BankShared.Data;
+using BankShared.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 
@@ -73,7 +73,7 @@ namespace BankAPI.Controllers
                     LocationId = request.LocationId,
                     Amount = request.Amount,
                     Currency = account.Currency,
-                    MovementType = BankAPP.Shared.Constants.MovementTypes.CardPayment,
+                    MovementType = BankShared.Constants.MovementTypes.CardPayment,
                     Status = "completed",
                     Description = $"POS Payment at {location?.Merchant?.MerchantName ?? "Unknown Merchant"}, {location!.City}",
                     ReferenceNumber = $"POS-{DateTime.UtcNow.Ticks}",
@@ -302,7 +302,7 @@ namespace BankAPI.Controllers
                     return Forbid("Only admin can view transfer approvals");
 
                 var pendingTransfers = _context.Movements
-                    .Where(m => m.MovementType == BankAPP.Shared.Constants.MovementTypes.Transfer && m.Status == "pending")
+                    .Where(m => m.MovementType == BankShared.Constants.MovementTypes.Transfer && m.Status == "pending")
                     .Include(m => m.Account)
                     .Select(m => new PendingTransferDto
                     {
@@ -347,7 +347,7 @@ namespace BankAPI.Controllers
                 var creditMovement = _context.Movements
                     .FirstOrDefault(m => m.ReferenceNumber == debitMovement.ReferenceNumber && 
                                        m.MovementId != movementId && 
-                                       m.MovementType == BankAPP.Shared.Constants.MovementTypes.Transfer);
+                                       m.MovementType == BankShared.Constants.MovementTypes.Transfer);
 
                 // Get accounts
                 var fromAccount = _context.Accounts.FirstOrDefault(a => a.Id == debitMovement.AccountId);
@@ -413,7 +413,7 @@ namespace BankAPI.Controllers
                 var creditMovement = _context.Movements
                     .FirstOrDefault(m => m.ReferenceNumber == debitMovement.ReferenceNumber && 
                                        m.MovementId != movementId && 
-                                       m.MovementType == BankAPP.Shared.Constants.MovementTypes.Transfer);
+                                       m.MovementType == BankShared.Constants.MovementTypes.Transfer);
 
                 // Mark both as rejected
                 debitMovement.Status = "rejected";

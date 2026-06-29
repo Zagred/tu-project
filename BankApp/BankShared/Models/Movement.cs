@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using BankAPP.Shared.Constants;
+using BankShared.Constants;
 
-namespace BankAPP.Shared.Models
+namespace BankShared.Models
 {
     [Table("movements")]
     public class Movement

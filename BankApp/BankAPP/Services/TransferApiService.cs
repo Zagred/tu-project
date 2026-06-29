@@ -1,4 +1,4 @@
-﻿using BankAPP.Shared.DTOs;
+using BankShared.DTOs;
 using System.Net.Http.Json;
 
 namespace BankAPP.Services

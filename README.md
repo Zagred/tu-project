@@ -23,18 +23,18 @@ DB VM
   -> SQL Server container on port 1433
 
 Android Emulator
-  -> calls API at http://192.168.56.104:7083/
+  -> calls API at http://<app-vm-host>:7083/
 ```
 
 ## VMs
 
-| VM | IP | Purpose |
+| VM | Host value | Purpose |
 | --- | --- | --- |
-| nexus | 192.168.56.101 | Nexus artifact repository |
-| sonarqube | 192.168.56.102 | Code analysis |
-| jenkinsvm | 192.168.56.103 | CI/CD pipeline |
-| app | 192.168.56.104 | API and Web runtime |
-| db | 192.168.56.105 | SQL Server runtime |
+| nexus | `bankapp-nexus-host` Jenkins credential | Nexus artifact repository |
+| sonarqube | `bankapp-sonar-host` Jenkins credential | Code analysis |
+| jenkinsvm | local Vagrant host | CI/CD pipeline |
+| app | `bankapp-app-vm-host` Jenkins credential | API and Web runtime |
+| db | inside `bankapp-db-connection-string` Jenkins credential | SQL Server runtime |
 
 ## Required Jenkins Credentials
 
@@ -47,11 +47,14 @@ Create these in Jenkins before running the pipeline:
 | sonartoken | Secret text | SonarQube analysis token |
 | docker-hub-credentials | Username with password | Docker Hub push and pull |
 | bankapp-db-connection-string | Secret text | SQL Server connection string for API containers |
+| bankapp-app-vm-host | Secret text | App VM host or IP |
+| bankapp-sonar-host | Secret text | SonarQube host or IP |
+| bankapp-nexus-host | Secret text | Nexus host or IP |
 
 Example value for `bankapp-db-connection-string`:
 
 ```text
-Server=192.168.56.105,1433;Database=BankAppDb;User Id=sa;Password=<password>;TrustServerCertificate=True;
+Server=<db-vm-host>,1433;Database=BankAppDb;User Id=sa;Password=<password>;TrustServerCertificate=True;
 ```
 
 ## Local Environment File
@@ -82,14 +85,14 @@ vagrant provision db
 Deploy API and Web manually on the App VM from local source:
 
 ```powershell
-vagrant ssh app -c "sudo env APP_ROOT=/vagrant BANKAPP_DB_CONNECTION_STRING='Server=192.168.56.105,1433;Database=BankAppDb;User Id=sa;Password=<password>;TrustServerCertificate=True;' bash /vagrant_userdata/app-docker-deploy.sh"
+vagrant ssh app -c "sudo env APP_ROOT=/vagrant BANKAPP_DB_CONNECTION_STRING='Server=<db-vm-host>,1433;Database=BankAppDb;User Id=sa;Password=<password>;TrustServerCertificate=True;' bash /vagrant_userdata/app-docker-deploy.sh"
 ```
 
 Check runtime endpoints:
 
 ```powershell
-curl.exe http://192.168.56.104:7083/api/users/testuser
-curl.exe http://192.168.56.104:5000/
+curl.exe http://<app-vm-host>:7083/api/users/testuser
+curl.exe http://<app-vm-host>:5000/
 ```
 
 Build and install the Android debug APK locally:
