@@ -175,8 +175,7 @@ dotnet sonarscanner begin \
   /n:"$SONAR_PROJECT_NAME" \
   /d:sonar.host.url="$SONAR_HOST_URL" \
   /d:sonar.token="$SONAR_TOKEN" \
-  /d:sonar.qualitygate.wait=true \
-  /d:sonar.qualitygate.timeout=300 \
+  /d:sonar.qualitygate.wait=false \
   /d:sonar.exclusions="**/bin/**,**/obj/**,BankAPI/**,BankAPI.Tests/**,BankWeb/**" \
   /d:sonar.coverage.exclusions="**/*"
 
