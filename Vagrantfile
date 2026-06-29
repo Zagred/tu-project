@@ -6,6 +6,7 @@ Vagrant.configure("2") do |config|
   config.ssh.insert_key = false
   config.ssh.keys_only = false
 
+  
   stabilize_virtualbox = lambda do |vb|
     vb.customize ["modifyvm", :id, "--graphicscontroller", "vmsvga"]
     vb.customize ["modifyvm", :id, "--vram", "32"]
