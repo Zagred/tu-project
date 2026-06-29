@@ -1,7 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BankAPP.Shared.Models
+namespace BankShared.Models
 {
     [Table("user_accounts")]
     public class UserAccount

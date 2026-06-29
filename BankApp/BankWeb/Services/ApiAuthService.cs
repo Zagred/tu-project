@@ -1,4 +1,4 @@
-using BankAPP.Shared.DTOs;
+using BankShared.DTOs;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Text.Json;

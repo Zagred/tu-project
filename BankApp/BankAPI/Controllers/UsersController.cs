@@ -1,10 +1,11 @@
-﻿using BankAPI.Helpers;
-using BankAPP.Shared.Data;
-using BankAPP.Shared.DTOs;
-using BankAPP.Shared.Models;
+using BankAPI.Helpers;
+using BankShared.Data;
+using BankShared.DTOs;
+using BankShared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using BankAPI.Services;
 using System.Security.Claims;
 
@@ -17,11 +18,16 @@ namespace BankAPI.Controllers
         private readonly AppDbContext _context;
 
         private readonly JwtService _jwtService;
+        private readonly IPasswordHasher<User> _passwordHasher;
 
-        public UsersController(AppDbContext context, JwtService jwtService)
+        public UsersController(
+            AppDbContext context,
+            JwtService jwtService,
+            IPasswordHasher<User> passwordHasher)
         {
             _context = context;
             _jwtService = jwtService;
+            _passwordHasher = passwordHasher;
         }
 
         [HttpGet("{username}")]
@@ -43,8 +49,21 @@ namespace BankAPI.Controllers
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Username == request.Username);
 
-            if (user == null || user.PasswordHash != request.Password)
+            if (user == null)
                 return Unauthorized(new { message = "Invalid credentials" });
+
+            var verificationResult = VerifyPassword(user, request.Password);
+            var isLegacyPlainTextMatch = user.PasswordHash == request.Password;
+
+            if (verificationResult == PasswordVerificationResult.Failed && !isLegacyPlainTextMatch)
+                return Unauthorized(new { message = "Invalid credentials" });
+
+            if (verificationResult == PasswordVerificationResult.SuccessRehashNeeded ||
+                isLegacyPlainTextMatch)
+            {
+                user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+                await _context.SaveChangesAsync();
+            }
 
             var token = _jwtService.GenerateToken(user);
 
@@ -75,16 +94,17 @@ namespace BankAPI.Controllers
             {
                 Name = request.Name,
                 Username = request.Username,
-                PasswordHash = request.Password,
                 Email = request.Email,
                 Egn = request.Egn,
                 RegistrationDate = DateTime.Now
             };
 
+            user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // 👉 Създаваме account
+            // Create the user's first account.
             var account = new Account
             {
                 IBAN = IbanGenerator.Generate(),
@@ -95,7 +115,7 @@ namespace BankAPI.Controllers
             _context.Accounts.Add(account);
             await _context.SaveChangesAsync();
 
-            // 👉 Връзка User ↔ Account (M:N)
+            // Link the user to the account.
             var userAccount = new UserAccount
             {
                 UserId = user.Id,
@@ -113,6 +133,18 @@ namespace BankAPI.Controllers
                 account.IBAN,
                 account.Balance
             });
+        }
+
+        private PasswordVerificationResult VerifyPassword(User user, string password)
+        {
+            try
+            {
+                return _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+            }
+            catch (FormatException)
+            {
+                return PasswordVerificationResult.Failed;
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
-﻿using BankAPP.Shared.Models;
+using BankShared.Models;
 
-namespace BankAPP.Shared.DTOs
+namespace BankShared.DTOs
 {
     public class LoginResponse
     {

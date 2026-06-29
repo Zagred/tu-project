@@ -1,5 +1,5 @@
 using BankAPP.Services;
-using BankAPP.Shared.DTOs;
+using BankShared.DTOs;
 using Microsoft.Maui.Graphics;
 
 namespace BankAPP

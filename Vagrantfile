@@ -1,5 +1,5 @@
 Vagrant.configure("2") do |config|
-  BOX_NAME = "ubuntu/jammy64"  # Upgraded to Ubuntu 22.04
+  BOX_NAME = "ubuntu/jammy64" 
   config.vm.boot_timeout = 900
   config.ssh.username = "vagrant"
   config.ssh.password = "vagrant"

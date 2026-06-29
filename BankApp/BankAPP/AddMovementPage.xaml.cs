@@ -1,6 +1,6 @@
 using BankAPP.Services;
-using BankAPP.Shared.Constants;
-using BankAPP.Shared.DTOs;
+using BankShared.Constants;
+using BankShared.DTOs;
 
 namespace BankAPP
 {

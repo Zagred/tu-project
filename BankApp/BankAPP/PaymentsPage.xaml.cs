@@ -1,6 +1,6 @@
 using BankAPP.Services;
-using BankAPP.Shared.Constants;
-using BankAPP.Shared.Models;
+using BankShared.Constants;
+using BankShared.Models;
 
 namespace BankAPP
 {

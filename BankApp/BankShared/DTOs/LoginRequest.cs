@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BankAPP.Shared.DTOs
+namespace BankShared.DTOs
 {
     public class LoginRequest
     {

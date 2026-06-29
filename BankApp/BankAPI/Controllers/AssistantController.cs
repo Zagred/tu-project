@@ -1,7 +1,7 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using BankAPI.Services;
-using BankAPP.Shared.Data;
-using BankAPP.Shared.DTOs;
+using BankShared.Data;
+using BankShared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

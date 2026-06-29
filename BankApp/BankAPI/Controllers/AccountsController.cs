@@ -1,6 +1,6 @@
-﻿using BankAPI.Helpers;
-using BankAPP.Shared.Data;
-using BankAPP.Shared.Models;
+using BankAPI.Helpers;
+using BankShared.Data;
+using BankShared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;

@@ -4,6 +4,7 @@
 *.tar.gz
 *.log
 *-console*.png
+~$*.docx
 
 userdata/id_rsa
 userdata/id_rsa.pub
