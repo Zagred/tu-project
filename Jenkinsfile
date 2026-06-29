@@ -19,6 +19,8 @@ pipeline {
     SONAR_API_PROJECT_NAME = 'Bank API'
     SONAR_WEB_PROJECT_KEY  = 'tu-bank-web'
     SONAR_WEB_PROJECT_NAME = 'Bank Web'
+    SONAR_MOBILE_PROJECT_KEY  = 'tu-bank-mobile-app'
+    SONAR_MOBILE_PROJECT_NAME = 'Bank Mobile App'
     SONAR_PORT             = '9000'
 
     NEXUS_REPOSITORY = 'android-apps'
@@ -147,6 +149,38 @@ dotnet sonarscanner begin \
   /d:sonar.coverage.exclusions="**/*"
 
 dotnet build BankWeb/BankWeb.csproj -c "$CONFIGURATION" --no-restore
+dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+REMOTE_SCRIPT
+        '''
+      }
+    }
+
+    stage('SonarQube Mobile') {
+      steps {
+        sh '''
+          set -e
+          sshpass -p "$VAGRANT_CREDS_PSW" ssh $SSH_OPTS "$VAGRANT_CREDS_USR@$APP_VM" \
+            "PROJECT_DIR='$PROJECT_DIR' MOBILE_CONFIGURATION='$MOBILE_CONFIGURATION' ANDROID_TFM='$ANDROID_TFM' ANDROID_SDK_DIR='$ANDROID_SDK_DIR' SONAR_HOST_URL='http://$SONAR_HOST:$SONAR_PORT' SONAR_PROJECT_KEY='$SONAR_MOBILE_PROJECT_KEY' SONAR_PROJECT_NAME='$SONAR_MOBILE_PROJECT_NAME' SONAR_TOKEN='$SONAR_TOKEN' bash -s" <<'REMOTE_SCRIPT'
+set -e
+cd "$PROJECT_DIR"
+export ANDROID_HOME="$ANDROID_SDK_DIR"
+export ANDROID_SDK_ROOT="$ANDROID_SDK_DIR"
+export PATH="$PATH:/home/vagrant/.dotnet/tools:$ANDROID_SDK_DIR/platform-tools:$ANDROID_SDK_DIR/cmdline-tools/latest/bin"
+rm -rf .sonarqube
+
+dotnet restore BankAPP/BankAPP.csproj
+
+dotnet sonarscanner begin \
+  /k:"$SONAR_PROJECT_KEY" \
+  /n:"$SONAR_PROJECT_NAME" \
+  /d:sonar.host.url="$SONAR_HOST_URL" \
+  /d:sonar.token="$SONAR_TOKEN" \
+  /d:sonar.qualitygate.wait=true \
+  /d:sonar.qualitygate.timeout=300 \
+  /d:sonar.exclusions="**/bin/**,**/obj/**,BankAPI/**,BankAPI.Tests/**,BankWeb/**" \
+  /d:sonar.coverage.exclusions="**/*"
+
+dotnet build BankAPP/BankAPP.csproj -f "$ANDROID_TFM" -c "$MOBILE_CONFIGURATION" --no-restore -p:AndroidSdkDirectory="$ANDROID_SDK_DIR/"
 dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 REMOTE_SCRIPT
         '''
