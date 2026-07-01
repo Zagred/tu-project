@@ -2,160 +2,466 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="BankAPP.PaymentsPage"
-             Title="Payments">
+             Title="Payments"
+             BackgroundColor="{StaticResource PageBg}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="18">
+    <ContentPage.Content>
+        <OnIdiom x:TypeArguments="View">
 
-            <Label Text="Payments"
-                   FontSize="30"
-                   FontAttributes="Bold" />
+            <!-- ══════════════════════════════════
+                 ДЕСКТОП layout
+            ══════════════════════════════════ -->
+            <OnIdiom.Desktop>
+                <Grid RowDefinitions="52,*" ColumnDefinitions="220,*">
 
-            <!-- SPENDING CHART -->
-            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Spending last 7 days" FontSize="22" FontAttributes="Bold" />
-                    <CollectionView x:Name="ChartCollectionView"
-                                    ItemsLayout="HorizontalList"
-                                    SelectionMode="None"
-                                    HeightRequest="170">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <VerticalStackLayout HorizontalOptions="Center" Spacing="8">
-                                    <BoxView HeightRequest="{Binding Height}" WidthRequest="24" Color="#4C8CFF" CornerRadius="12" />
-                                    <Label Text="{Binding DayLabel}" FontSize="12" HorizontalTextAlignment="Center" />
-                                    <Label Text="{Binding AmountText}" FontSize="12" HorizontalTextAlignment="Center" />
+                    <!-- SIDEBAR -->
+                    <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
+                          BackgroundColor="{StaticResource NavyDeep}"
+                          RowDefinitions="Auto,*,Auto">
+                        <HorizontalStackLayout Grid.Row="0" Spacing="10" Padding="20,22,20,20">
+                            <Border BackgroundColor="{StaticResource BrandRed}"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                                    WidthRequest="34" HeightRequest="34" Padding="0">
+                                <Path Data="M11.5 1L2 6v2h19V6M16 10v7M12 10v7M8 10v7M2 19h19M2 22h19"
+                                      Stroke="White" StrokeThickness="1.6" StrokeLineCap="Round" StrokeLineJoin="Round"
+                                      WidthRequest="18" HeightRequest="18" Aspect="Uniform"
+                                      HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Spacing="1" VerticalOptions="Center">
+                                <Label Text="BankApp" FontSize="15" FontAttributes="Bold" TextColor="White"/>
+                                <Label Text="ДИГИТАЛНО БАНКИРАНЕ" FontSize="8" CharacterSpacing="0.6" TextColor="#55FFFFFF"/>
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+                        <VerticalStackLayout Grid.Row="1" Padding="10,16" Spacing="2">
+                            <Label Text="ГЛАВНО МЕНЮ" FontSize="9" CharacterSpacing="0.8"
+                                   TextColor="#44FFFFFF" Margin="10,0,0,8" TextTransform="Uppercase"/>
+                            <Button Text="Сметки" BackgroundColor="Transparent" TextColor="#77FFFFFF"
+                                    BorderWidth="0" CornerRadius="7" FontSize="13" HeightRequest="42"
+                                    HorizontalOptions="Fill" Padding="10,0" Clicked="OnNavigateToAccounts"/>
+                            <Button Text="Преводи" BackgroundColor="Transparent" TextColor="#77FFFFFF"
+                                    BorderWidth="0" CornerRadius="7" FontSize="13" HeightRequest="42"
+                                    HorizontalOptions="Fill" Padding="10,0" Clicked="OnNavigateToTransfers"/>
+                            <Border BackgroundColor="{StaticResource BrandRed}"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 7" Padding="10,9">
+                                <Label Text="Плащания" FontSize="13" TextColor="White" VerticalOptions="Center"/>
+                            </Border>
+                            <Button x:Name="SidebarAdminButton" Text="Admin" BackgroundColor="Transparent" TextColor="#77FFFFFF"
+                                    BorderWidth="0" CornerRadius="7" FontSize="13" HeightRequest="42"
+                                    HorizontalOptions="Fill" Padding="10,0" Clicked="OnNavigateToAdmin"
+                                    IsVisible="False"/>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Row="2" Padding="10,14">
+                            <BoxView HeightRequest="0.5" Color="#33FFFFFF" Margin="0,0,0,12"/>
+                            <HorizontalStackLayout Spacing="10" Padding="10,0">
+                                <Border BackgroundColor="{StaticResource BrandRed}"
+                                        StrokeThickness="0" StrokeShape="RoundRectangle 16"
+                                        WidthRequest="32" HeightRequest="32">
+                                    <Label x:Name="AvatarLabel" Text="?" FontSize="13" FontAttributes="Bold"
+                                           TextColor="White" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                                <VerticalStackLayout Spacing="1" VerticalOptions="Center">
+                                    <Label x:Name="SidebarUsernameLabel" Text="—" FontSize="12"
+                                           FontAttributes="Bold" TextColor="#CCFFFFff"/>
+                                    <Label Text="Стандартен акаунт" FontSize="10" TextColor="#55FFFFFF"/>
                                 </VerticalStackLayout>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </VerticalStackLayout>
-            </Frame>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Grid>
 
-            <!-- PAYMENTS SUMMARY -->
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <!-- TOPBAR -->
+                    <Grid Grid.Row="0" Grid.Column="1" BackgroundColor="White"
+                          ColumnDefinitions="*,Auto,Auto" Padding="24,0" ColumnSpacing="10">
+                        <Label Grid.Column="0" Text="Плащания" FontSize="16" FontAttributes="Bold"
+                               TextColor="{StaticResource TextPrimary}" VerticalOptions="Center"/>
+                        <Border Grid.Column="1" BackgroundColor="#F3F4F6"
+                                StrokeThickness="0.5" Stroke="{StaticResource BorderColor}"
+                                StrokeShape="RoundRectangle 6" Padding="12,5">
+                            <Label Text="17 май 2026" FontSize="11"
+                                   TextColor="{StaticResource TextMuted}" VerticalOptions="Center"/>
+                        </Border>
+                        <Button Grid.Column="2" Text="Изход" BackgroundColor="Transparent"
+                                TextColor="{StaticResource TextMuted}" BorderColor="{StaticResource BorderColor}"
+                                BorderWidth="1" CornerRadius="7" FontSize="12" FontAttributes="Bold"
+                                HeightRequest="34" Padding="14,0" Clicked="OnLogoutClicked"/>
+                    </Grid>
 
-                <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="Total Spent" FontAttributes="Bold" FontSize="16"/>
-                        <Label x:Name="TotalSpentLabel" Text="0.00" FontSize="24" TextColor="Red"/>
-                    </VerticalStackLayout>
-                </Frame>
+                    <!-- MAIN CONTENT -->
+                    <ScrollView Grid.Row="1" Grid.Column="1">
+                        <VerticalStackLayout Padding="24" Spacing="14">
 
-                <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="Total Income" FontAttributes="Bold" FontSize="16"/>
-                        <Label x:Name="TotalIncomeLabel" Text="0.00" FontSize="24" TextColor="Green"/>
-                    </VerticalStackLayout>
-                </Frame>
-
-            </Grid>
-
-            <!-- TRANSFER WARNING -->
-            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Transfers only"
-                           FontSize="22"
-                           FontAttributes="Bold" />
-                    <Label Text="Direct transaction creation is disabled for regular users. Use the Transfers page to submit transfer requests. Admin POS terminal actions are handled separately." />
-                </VerticalStackLayout>
-            </Frame>
-            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="AI Financial Assistant"
-               FontSize="22"
-               FontAttributes="Bold" />
-
-                    <Label Text="Generate advice based on your payments."
-               Opacity="0.7" />
-
-                    <Button Text="Generate AI Advice"
-                CornerRadius="12"
-                HeightRequest="48"
-                Clicked="OnAiAdviceClicked" />
-
-                    <Button Text="Email Monthly Report"
-                CornerRadius="12"
-                HeightRequest="48"
-                Clicked="OnEmailReportClicked" />
-                </VerticalStackLayout>
-            </Frame>
-            <!-- PAYMENTS LIST -->
-            <Frame Padding="16" CornerRadius="18" BorderColor="LightGray">
-                <VerticalStackLayout Spacing="12">
-
-                    <Label Text="All Payments"
-                           FontSize="22"
-                           FontAttributes="Bold" />
-
-                    <Picker x:Name="FilterPicker"
-                            Title="Filter by type"
-                            SelectedIndexChanged="OnFilterChanged">
-                        <Picker.ItemsSource>
-                            <x:Array Type="{x:Type x:String}">
-                                <x:String>all</x:String>
-                                <x:String>card_payment</x:String>
-                                <x:String>transfer</x:String>
-                                <x:String>cash_withdrawal</x:String>
-                                <x:String>deposit</x:String>
-                                <x:String>fee</x:String>
-                            </x:Array>
-                        </Picker.ItemsSource>
-                    </Picker>
-
-                    <CollectionView x:Name="PaymentsCollection"
-                                    SelectionMode="None">
-
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <Frame Padding="12" Margin="0,5" CornerRadius="14" BorderColor="LightGray">
-                                    <VerticalStackLayout Spacing="6">
-
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <VerticalStackLayout>
-                                                <Label Text="{Binding MovementTypeDisplay}"
-                                                       FontAttributes="Bold"
-                                                       FontSize="18"/>
-                                                <Label Text="{Binding Category}"
-                                                       FontSize="12"
-                                                       Opacity="0.7" />
-                                            </VerticalStackLayout>
-
-                                            <Label Grid.Column="1"
-                                                   Text="{Binding AmountText}"
-                                                   FontSize="16">
-                                                <Label.Triggers>
-                                                    <DataTrigger TargetType="Label"
-                                                                 Binding="{Binding IsExpense}"
-                                                                 Value="True">
-                                                        <Setter Property="TextColor" Value="Red" />
-                                                    </DataTrigger>
-                                                    <DataTrigger TargetType="Label"
-                                                                 Binding="{Binding IsExpense}"
-                                                                 Value="False">
-                                                        <Setter Property="TextColor" Value="Green" />
-                                                    </DataTrigger>
-                                                </Label.Triggers>
-                                            </Label>
-                                        </Grid>
-
-                                        <Label Text="{Binding Description}" />
-                                        <Label Text="{Binding Status}" Opacity="0.8" />
-                                        <Label Text="{Binding Currency}" Opacity="0.8" />
-                                        <Label Text="{Binding ReferenceNumber}" Opacity="0.8" />
-                                        <Label Text="{Binding MovementDateTime, StringFormat='{0:dd.MM.yyyy HH:mm}'}"
-                                               Opacity="0.8" />
-
+                            <!-- Summary Hero -->
+                            <Border BackgroundColor="{StaticResource Navy}" StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12" Padding="24,20">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="8">
+                                        <Label Text="Разходи — последните 7 дни"
+                                               FontSize="11" TextColor="#77FFFFFF"/>
+                                        <CollectionView x:Name="ChartCollectionView"
+                                                        ItemsLayout="HorizontalList"
+                                                        SelectionMode="None"
+                                                        HeightRequest="90">
+                                            <CollectionView.ItemTemplate>
+                                                <DataTemplate>
+                                                    <VerticalStackLayout HorizontalOptions="Center"
+                                                                         Spacing="4" Padding="4,0">
+                                                        <BoxView HeightRequest="{Binding Height}"
+                                                                 WidthRequest="22"
+                                                                 Color="#F87171"
+                                                                 CornerRadius="3"
+                                                                 VerticalOptions="End"/>
+                                                        <Label Text="{Binding DayLabel}" FontSize="9"
+                                                               TextColor="#66FFFFFF"
+                                                               HorizontalTextAlignment="Center"/>
+                                                    </VerticalStackLayout>
+                                                </DataTemplate>
+                                            </CollectionView.ItemTemplate>
+                                        </CollectionView>
                                     </VerticalStackLayout>
-                                </Frame>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="12"
+                                                         HorizontalOptions="End" VerticalOptions="Center">
+                                        <VerticalStackLayout Spacing="2" HorizontalOptions="End">
+                                            <Label Text="Общо приходи" FontSize="10" TextColor="#55FFFFFF" HorizontalOptions="End"/>
+                                            <Label x:Name="TotalIncomeLabel" Text="0,00" FontSize="18" FontAttributes="Bold"
+                                                   TextColor="#4ADE80" HorizontalOptions="End"/>
+                                        </VerticalStackLayout>
+                                        <VerticalStackLayout Spacing="2" HorizontalOptions="End">
+                                            <Label Text="Разходи карта" FontSize="10" TextColor="#55FFFFFF" HorizontalOptions="End"/>
+                                            <Label x:Name="TotalSpentLabel" Text="0,00" FontSize="18" FontAttributes="Bold"
+                                                   TextColor="#F87171" HorizontalOptions="End"/>
+                                        </VerticalStackLayout>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
 
-                    </CollectionView>
+                            <!-- AI + Payments -->
+                            <Grid ColumnDefinitions="320,*" ColumnSpacing="14">
 
-                </VerticalStackLayout>
-            </Frame>
+                                <!-- AI Card -->
+                                <Border Grid.Column="0" Style="{StaticResource Card}">
+                                    <VerticalStackLayout Spacing="12">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <Border Grid.Column="0" BackgroundColor="{StaticResource Navy}"
+                                                    StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                                                    WidthRequest="32" HeightRequest="32">
+                                                <Path Data="M12 2 L15 9 L22 9 L16 14 L18 21 L12 17 L6 21 L8 14 L2 9 L9 9 Z"
+                                                      Fill="White" WidthRequest="16" HeightRequest="16"
+                                                      Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                            </Border>
+                                            <Label Grid.Column="1" Text="AI Финансов Асистент"
+                                                   FontSize="14" FontAttributes="Bold"
+                                                   TextColor="{StaticResource TextPrimary}"
+                                                   VerticalOptions="Center" Margin="10,0,0,0"/>
+                                        </Grid>
+                                        <Label Text="Генерирай персонализиран финансов съвет базиран на твоите транзакции."
+                                               FontSize="12" TextColor="{StaticResource TextMuted}" LineHeight="1.5"/>
+                                        <Button Text="Генерирай съвет"
+                                                Style="{StaticResource PrimaryBtn}"
+                                                Clicked="OnAiAdviceClicked"/>
+                                        <Button Text="Email monthly report"
+                                                Style="{StaticResource PrimaryBtn}"
+                                                Clicked="OnEmailReportClicked"/>
+                                    </VerticalStackLayout>
+                                </Border>
 
-        </VerticalStackLayout>
-    </ScrollView>
+                                <!-- Payments list -->
+                                <Border Grid.Column="1" Style="{StaticResource Card}">
+                                    <VerticalStackLayout Spacing="12">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Label Grid.Column="0" Text="Всички плащания"
+                                                   Style="{StaticResource SectionTitle}"/>
+                                            <Border Grid.Column="1" BackgroundColor="#F3F4F6"
+                                                    StrokeThickness="0.5" Stroke="{StaticResource BorderColor}"
+                                                    StrokeShape="RoundRectangle 6" Padding="8,4">
+                                                <Picker x:Name="FilterPicker" Title="Филтър"
+                                                        FontSize="11" BackgroundColor="Transparent"
+                                                        SelectedIndexChanged="OnFilterChanged">
+                                                    <Picker.ItemsSource>
+                                                        <x:Array Type="{x:Type x:String}">
+                                                            <x:String>all</x:String>
+                                                            <x:String>card_payment</x:String>
+                                                            <x:String>transfer</x:String>
+                                                            <x:String>cash_withdrawal</x:String>
+                                                            <x:String>deposit</x:String>
+                                                            <x:String>fee</x:String>
+                                                        </x:Array>
+                                                    </Picker.ItemsSource>
+                                                </Picker>
+                                            </Border>
+                                        </Grid>
+                                        <CollectionView x:Name="PaymentsCollection" SelectionMode="None">
+                                            <CollectionView.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="0,0,0,8" BackgroundColor="#F8F9FC"
+                                                            StrokeThickness="0.5" Stroke="{StaticResource BorderColor}"
+                                                            StrokeShape="RoundRectangle 8" Padding="14,12">
+                                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                            <Border Grid.Column="0" StrokeThickness="0"
+                                                                    StrokeShape="RoundRectangle 9"
+                                                                    WidthRequest="36" HeightRequest="36"
+                                                                    BackgroundColor="{StaticResource BrandRedLight}">
+                                                                <Path Data="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                                                                      Stroke="{StaticResource BrandRed}" StrokeThickness="1.4"
+                                                                      StrokeLineCap="Round" StrokeLineJoin="Round"
+                                                                      WidthRequest="18" HeightRequest="18" Aspect="Uniform"
+                                                                      HorizontalOptions="Center" VerticalOptions="Center"/>
+                                                            </Border>
+                                                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                                                <Label Text="{Binding MovementTypeDisplay}" FontSize="13"
+                                                                       FontAttributes="Bold" TextColor="{StaticResource TextPrimary}"/>
+                                                                <Label Text="{Binding Description}" FontSize="11"
+                                                                       TextColor="{StaticResource TextMuted}"/>
+                                                                <Label Text="{Binding MovementDateTime, StringFormat='{0:dd.MM.yyyy HH:mm}'}"
+                                                                       FontSize="10" TextColor="{StaticResource TextMuted}"/>
+                                                            </VerticalStackLayout>
+                                                            <VerticalStackLayout Grid.Column="2" HorizontalOptions="End" VerticalOptions="Center">
+                                                                <Label Text="{Binding AmountText}" FontSize="14" FontAttributes="Bold"
+                                                                       HorizontalOptions="End">
+                                                                    <Label.Triggers>
+                                                                        <DataTrigger TargetType="Label" Binding="{Binding IsExpense}" Value="True">
+                                                                            <Setter Property="TextColor" Value="{StaticResource BrandRed}"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger TargetType="Label" Binding="{Binding IsExpense}" Value="False">
+                                                                            <Setter Property="TextColor" Value="{StaticResource SuccessGreen}"/>
+                                                                        </DataTrigger>
+                                                                    </Label.Triggers>
+                                                                </Label>
+                                                                <Label Text="{Binding Currency}" FontSize="10"
+                                                                       TextColor="{StaticResource TextMuted}" HorizontalOptions="End"/>
+                                                            </VerticalStackLayout>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </CollectionView.ItemTemplate>
+                                        </CollectionView>
+                                    </VerticalStackLayout>
+                                </Border>
+
+                            </Grid>
+                        </VerticalStackLayout>
+                    </ScrollView>
+                </Grid>
+            </OnIdiom.Desktop>
+
+            <!-- ══════════════════════════════════
+                 МОБИЛЕН layout
+            ══════════════════════════════════ -->
+            <OnIdiom.Phone>
+                <Grid RowDefinitions="*,60" BackgroundColor="{StaticResource PageBg}">
+                    <ScrollView Grid.Row="0">
+                        <VerticalStackLayout Spacing="0">
+
+                            <!-- Mobile Header with chart -->
+                            <Grid BackgroundColor="{StaticResource NavyDeep}" Padding="20,48,20,20">
+                                <Ellipse Fill="#07FFFFFF" WidthRequest="180" HeightRequest="180"
+                                         HorizontalOptions="End" VerticalOptions="Start" Margin="0,-40,-40,0"/>
+                                <VerticalStackLayout Spacing="0">
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                                        <Label Grid.Column="0" Text="Плащания"
+                                               FontSize="20" FontAttributes="Bold" TextColor="White"
+                                               VerticalOptions="Center"/>
+                                        <Label Grid.Column="1" Text="17 май 2026"
+                                               FontSize="11" TextColor="#55FFFFFF" VerticalOptions="Center"/>
+                                    </Grid>
+
+                                    <!-- Mini chart -->
+                                    <Label Text="Разходи — последните 7 дни"
+                                           FontSize="10" TextColor="#55FFFFFF" Margin="0,0,0,8"/>
+                                    <CollectionView x:Name="ChartCollectionViewM"
+                                                    ItemsLayout="HorizontalList"
+                                                    SelectionMode="None"
+                                                    HeightRequest="70">
+                                        <CollectionView.ItemTemplate>
+                                            <DataTemplate>
+                                                <VerticalStackLayout HorizontalOptions="Center" Spacing="4" Padding="4,0">
+                                                    <BoxView HeightRequest="{Binding Height}" WidthRequest="20"
+                                                             Color="#F87171" CornerRadius="3" VerticalOptions="End"/>
+                                                    <Label Text="{Binding DayLabel}" FontSize="9"
+                                                           TextColor="#55FFFFFF" HorizontalTextAlignment="Center"/>
+                                                </VerticalStackLayout>
+                                            </DataTemplate>
+                                        </CollectionView.ItemTemplate>
+                                    </CollectionView>
+
+                                    <!-- Stats -->
+                                    <Grid ColumnDefinitions="*,*" Margin="0,14,0,0">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                            <Label Text="Общо приходи" FontSize="10" TextColor="#55FFFFFF"/>
+                                            <Label x:Name="TotalIncomeLabelM" Text="0,00"
+                                                   FontSize="18" FontAttributes="Bold" TextColor="#4ADE80"/>
+                                        </VerticalStackLayout>
+                                        <VerticalStackLayout Grid.Column="1" HorizontalOptions="End" Spacing="2">
+                                            <Label Text="Разходи карта" FontSize="10" TextColor="#55FFFFFF" HorizontalOptions="End"/>
+                                            <Label x:Name="TotalSpentLabelM" Text="0,00"
+                                                   FontSize="18" FontAttributes="Bold" TextColor="#F87171"
+                                                   HorizontalOptions="End"/>
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                    <Button Text="Email monthly report"
+                                            Style="{StaticResource PrimaryBtn}"
+                                            Margin="0,14,0,0"
+                                            Clicked="OnEmailReportClicked"/>
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <!-- Payments list -->
+                            <VerticalStackLayout Padding="16,14">
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                                    <Label Grid.Column="0" Text="Всички плащания"
+                                           FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource TextPrimary}"/>
+                                    <Border Grid.Column="1" BackgroundColor="#F3F4F6"
+                                            StrokeThickness="0.5" Stroke="{StaticResource BorderColor}"
+                                            StrokeShape="RoundRectangle 6" Padding="8,3">
+                                        <Picker x:Name="FilterPickerM" Title="Филтър"
+                                                FontSize="11" BackgroundColor="Transparent"
+                                                SelectedIndexChanged="OnFilterChanged">
+                                            <Picker.ItemsSource>
+                                                <x:Array Type="{x:Type x:String}">
+                                                    <x:String>all</x:String>
+                                                    <x:String>card_payment</x:String>
+                                                    <x:String>transfer</x:String>
+                                                    <x:String>cash_withdrawal</x:String>
+                                                    <x:String>deposit</x:String>
+                                                    <x:String>fee</x:String>
+                                                </x:Array>
+                                            </Picker.ItemsSource>
+                                        </Picker>
+                                    </Border>
+                                </Grid>
+
+                                <CollectionView x:Name="PaymentsCollectionM" SelectionMode="None">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,8" BackgroundColor="White"
+                                                    StrokeThickness="0.5" Stroke="{StaticResource BorderColor}"
+                                                    StrokeShape="RoundRectangle 10" Padding="14,12">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                    <Border Grid.Column="0" StrokeThickness="0"
+                                                            StrokeShape="RoundRectangle 9"
+                                                            WidthRequest="36" HeightRequest="36"
+                                                            BackgroundColor="{StaticResource BrandRedLight}">
+                                                        <Path Data="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                                                              Stroke="{StaticResource BrandRed}" StrokeThickness="1.4"
+                                                              StrokeLineCap="Round" StrokeLineJoin="Round"
+                                                              WidthRequest="18" HeightRequest="18" Aspect="Uniform"
+                                                              HorizontalOptions="Center" VerticalOptions="Center"/>
+                                                    </Border>
+                                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                                        <Label Text="{Binding MovementTypeDisplay}" FontSize="13"
+                                                               FontAttributes="Bold" TextColor="{StaticResource TextPrimary}"/>
+                                                        <Label Text="{Binding Description}" FontSize="11"
+                                                               TextColor="{StaticResource TextMuted}"/>
+                                                        <Label Text="{Binding MovementDateTime, StringFormat='{0:dd.MM.yyyy HH:mm}'}"
+                                                               FontSize="10" TextColor="{StaticResource TextMuted}"/>
+                                                    </VerticalStackLayout>
+                                                    <VerticalStackLayout Grid.Column="2" HorizontalOptions="End" VerticalOptions="Center">
+                                                        <Label Text="{Binding AmountText}" FontSize="14" FontAttributes="Bold"
+                                                               HorizontalOptions="End">
+                                                            <Label.Triggers>
+                                                                <DataTrigger TargetType="Label" Binding="{Binding IsExpense}" Value="True">
+                                                                    <Setter Property="TextColor" Value="{StaticResource BrandRed}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger TargetType="Label" Binding="{Binding IsExpense}" Value="False">
+                                                                    <Setter Property="TextColor" Value="{StaticResource SuccessGreen}"/>
+                                                                </DataTrigger>
+                                                            </Label.Triggers>
+                                                        </Label>
+                                                        <Label Text="{Binding Currency}" FontSize="10"
+                                                               TextColor="{StaticResource TextMuted}" HorizontalOptions="End"/>
+                                                    </VerticalStackLayout>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+
+                        </VerticalStackLayout>
+                    </ScrollView>
+
+                    <!-- Bottom Navigation -->
+                    <Grid x:Name="MobileNavGrid" Grid.Row="1" BackgroundColor="White" ColumnDefinitions="*,*,*,*,*" Padding="0,8,0,12">
+                        <BoxView x:Name="MobileNavSeparator" Grid.ColumnSpan="5" Color="{StaticResource BorderColor}"
+                                 HeightRequest="0.5" VerticalOptions="Start"/>
+                        <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center" Spacing="3">
+                            <BoxView Color="Transparent" WidthRequest="4" HeightRequest="4" CornerRadius="2"/>
+                            <Path Data="M3 9 L12 2 L21 9 L21 21 L5 21 Z"
+                                  Stroke="{StaticResource TextMuted}" StrokeThickness="1.6"
+                                  StrokeLineCap="Round" StrokeLineJoin="Round"
+                                  WidthRequest="22" HeightRequest="22" Aspect="Uniform" HorizontalOptions="Center">
+                                <Path.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnNavigateToAccounts"/>
+                                </Path.GestureRecognizers>
+                            </Path>
+                            <Label Text="Начало" FontSize="10" TextColor="{StaticResource TextMuted}" HorizontalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnNavigateToAccounts"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" Spacing="3">
+                            <BoxView Color="Transparent" WidthRequest="4" HeightRequest="4" CornerRadius="2"/>
+                            <Path Data="M12 4 L12 20 M4 12 L12 4 L20 12 M20 4 L20 20"
+                                  Stroke="{StaticResource TextMuted}" StrokeThickness="1.6"
+                                  StrokeLineCap="Round" StrokeLineJoin="Round"
+                                  WidthRequest="22" HeightRequest="22" Aspect="Uniform" HorizontalOptions="Center">
+                                <Path.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnNavigateToTransfers"/>
+                                </Path.GestureRecognizers>
+                            </Path>
+                            <Label Text="Преводи" FontSize="10" TextColor="{StaticResource TextMuted}" HorizontalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnNavigateToTransfers"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center" Spacing="3">
+                            <BoxView Color="{StaticResource BrandRed}" WidthRequest="4" HeightRequest="4"
+                                     CornerRadius="2" HorizontalOptions="Center"/>
+                            <Path Data="M2 8 L22 8 M2 6 C2 6 2 18 2 18 C2 19 3 20 4 20 L20 20 C21 20 22 19 22 18 L22 6 C22 5 21 4 20 4 L4 4 C3 4 2 5 2 6 Z"
+                                  Stroke="{StaticResource Navy}" StrokeThickness="1.6"
+                                  StrokeLineCap="Round" StrokeLineJoin="Round"
+                                  WidthRequest="22" HeightRequest="22" Aspect="Uniform" HorizontalOptions="Center"/>
+                            <Label Text="Плащания" FontSize="10" TextColor="{StaticResource Navy}"
+                                   FontAttributes="Bold" HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout x:Name="MobileNavAdminItem" Grid.Column="3" HorizontalOptions="Center" Spacing="3"
+                                             IsVisible="False">
+                            <BoxView Color="Transparent" WidthRequest="4" HeightRequest="4" CornerRadius="2"/>
+                            <Path Data="M12 2 L20 5 V11 C20 16 16 20 12 22 C8 20 4 16 4 11 V5 Z M9 12 L11 14 L15 10"
+                                  Stroke="{StaticResource TextMuted}" StrokeThickness="1.6"
+                                  StrokeLineCap="Round" StrokeLineJoin="Round"
+                                  WidthRequest="22" HeightRequest="22" Aspect="Uniform" HorizontalOptions="Center">
+                                <Path.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnNavigateToAdmin"/>
+                                </Path.GestureRecognizers>
+                            </Path>
+                            <Label Text="Admin" FontSize="10" TextColor="{StaticResource TextMuted}" HorizontalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnNavigateToAdmin"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout x:Name="MobileNavLogoutItem" Grid.Column="4" HorizontalOptions="Center" Spacing="3">
+                            <BoxView Color="Transparent" WidthRequest="4" HeightRequest="4" CornerRadius="2"/>
+                            <Path Data="M20 21 L20 19 C20 17 18 16 16 16 L8 16 C6 16 4 17 4 19 L4 21 M12 12 C14 12 16 10 16 8 C16 6 14 4 12 4 C10 4 8 6 8 8 C8 10 10 12 12 12 Z"
+                                  Stroke="{StaticResource TextMuted}" StrokeThickness="1.6"
+                                  StrokeLineCap="Round" StrokeLineJoin="Round"
+                                  WidthRequest="22" HeightRequest="22" Aspect="Uniform" HorizontalOptions="Center">
+                                <Path.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnLogoutClicked"/>
+                                </Path.GestureRecognizers>
+                            </Path>
+                            <Label Text="Изход" FontSize="10" TextColor="{StaticResource TextMuted}" HorizontalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnLogoutClicked"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Grid>
+            </OnIdiom.Phone>
+
+        </OnIdiom>
+    </ContentPage.Content>
 </ContentPage>

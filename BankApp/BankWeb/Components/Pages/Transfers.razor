@@ -3,87 +3,143 @@
 @inject AccountApiService AccountService
 @inject MovementApiService MovementService
 @inject TransferApiService TransferService
+@using BankShared.Utilities
 
-<PageTitle>Transfers</PageTitle>
+<PageTitle>Преводи — BankApp</PageTitle>
 
 @if (AuthService.CurrentUser == null)
 {
-    <section class="empty-state">
-        <h1>You are not logged in</h1>
-        <a class="btn btn-primary" href="/login">Go to login</a>
-    </section>
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+        <div class="ucb-card" style="text-align:center;padding:40px;max-width:360px;">
+            <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;">Не сте влезли в системата</p>
+            <a class="btn-ucb-primary" href="/login" style="text-decoration:none;display:block;">Към вход</a>
+        </div>
+    </div>
 }
 else
 {
-    <div class="page-heading">
-        <div>
-            <h1>Transfers</h1>
-            <p class="text-muted">Submit transfers for admin approval and review transfer history.</p>
-        </div>
-        <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
-    </div>
+    <div class="grid-2" style="align-items:start;">
 
-    <section class="split-layout">
-        <div class="tool-panel">
-            <h2>New transfer</h2>
-            <div class="form-grid">
-                <label>
-                    From account
-                    <select class="form-select" @bind="fromAccountId">
-                        @foreach (var account in accounts)
-                        {
-                            <option value="@account.Id">@account.DisplayText</option>
-                        }
-                    </select>
-                </label>
-                <label>
-                    Recipient IBAN
-                    <input class="form-control" @bind="toIban" />
-                </label>
-                <label>
-                    Amount
-                    <input class="form-control" type="number" step="0.01" @bind="amount" />
-                </label>
-                <label>
-                    Description
-                    <input class="form-control" @bind="description" />
-                </label>
+        <!-- ФОРМА ЗА ПРЕВОД -->
+        <div class="ucb-card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                <div style="width:32px;height:32px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                         stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="4" x2="12" y2="20" />
+                        <polyline points="4 12 12 4 20 12" />
+                        <line x1="20" y1="4" x2="20" y2="20" />
+                    </svg>
+                </div>
+                <div style="font-size:15px;font-weight:700;color:var(--text-primary);">Нов превод</div>
             </div>
-            <button class="btn btn-primary" type="button" @onclick="SubmitTransferAsync">Submit transfer</button>
+
+            <div class="form-group">
+                <label class="field-label">ИЗХОДЯЩА СМЕТКА</label>
+                <select class="ucb-select" @bind="fromAccountId">
+                    @foreach (var account in accounts)
+                    {
+                        <option value="@account.Id">@account.DisplayText</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="field-label">IBAN НА ПОЛУЧАТЕЛЯ</label>
+                <input class="ucb-input" placeholder="BG__ ____ ____ ____"
+                       @bind="toIban" @bind:event="oninput" />
+            </div>
+
+            <div class="grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="field-label">СУМА (BGN)</label>
+                    <input class="ucb-input" type="number" step="0.01" placeholder="0,00"
+                           @bind="amount" />
+                </div>
+                <div class="form-group">
+                    <label class="field-label">ОСНОВАНИЕ</label>
+                    <input class="ucb-input" placeholder="Описание"
+                           @bind="description" @bind:event="oninput" />
+                </div>
+            </div>
+
+            <button class="btn-ucb-primary" @onclick="SubmitTransferAsync"
+                    disabled="@isLoading" style="margin-top:4px;">
+                @if (isLoading)
+                {
+                    <span class="btn-spinner"></span>
+                    <span>Изпращане...</span>
+                }
+                else
+                {
+                    <span>Изпрати превод</span>
+                }
+            </button>
 
             @if (!string.IsNullOrEmpty(message))
             {
-                <p class="alert @messageClass">@message</p>
+                <div class="@(messageClass.Contains("danger") ? "ucb-alert-danger" : "ucb-alert-success")"
+                     style="margin-top:14px;">
+                    @message
+                </div>
+            }
+
+            <div class="ucb-security-note" style="margin-top:14px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#15803d">
+                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+                </svg>
+                Преводът е защитен и криптиран
+            </div>
+        </div>
+
+        <!-- ИСТОРИЯ НА ПРЕВОДИТЕ -->
+        <div class="ucb-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div class="section-title">История на преводите</div>
+                <button @onclick="LoadDataAsync"
+                        style="background:#F3F4F6;border:0.5px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--text-muted);cursor:pointer;">
+                    Обнови
+                </button>
+            </div>
+
+            @if (transfers.Count == 0)
+            {
+                <p style="font-size:13px;color:var(--text-muted);text-align:center;padding:24px 0;">
+                    Няма преводи за показване.
+                </p>
+            }
+            else
+            {
+                @foreach (var transfer in transfers)
+                {
+                    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border);">
+                        <div style="width:36px;height:36px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                 stroke="var(--green)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="19" x2="12" y2="5" />
+                                <polyline points="5 12 12 19 19 12" />
+                            </svg>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;font-weight:600;color:var(--text-primary);">
+                                @(string.IsNullOrEmpty(transfer.Description) ? "Превод" : transfer.Description)
+                            </div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+                                @transfer.Status · @transfer.MovementDateTime.ToString("dd.MM.yyyy HH:mm")
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:14px;font-weight:700;color:@(transfer.IsExpense ? "var(--red)" : "var(--green)");">
+                                @transfer.AmountText
+                            </div>
+                            <div style="font-size:10px;color:var(--text-muted);">@transfer.Currency</div>
+                        </div>
+                    </div>
+                }
             }
         </div>
 
-        <div>
-            <h2>Transfer history</h2>
-            <div class="table-responsive">
-                <table class="table table-sm align-middle">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Status</th>
-                            <th class="text-end">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var transfer in transfers)
-                        {
-                            <tr>
-                                <td>@transfer.MovementDateTime.ToString("dd.MM.yyyy HH:mm")</td>
-                                <td>@transfer.Description</td>
-                                <td>@transfer.Status</td>
-                                <td class="text-end">@transfer.AmountText @transfer.Currency</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
+    </div>
 }
 
 @code {
@@ -95,11 +151,11 @@ else
     private string description = "";
     private string message = "";
     private string messageClass = "alert-success";
+    private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
         await AuthService.InitializeAsync();
-
         if (AuthService.CurrentUser != null)
             await LoadDataAsync();
     }
@@ -109,53 +165,33 @@ else
         accounts = await AccountService.GetMyAccountsAsync();
         if (fromAccountId == 0 && accounts.Count > 0)
             fromAccountId = accounts[0].Id;
-
         transfers = await MovementService.GetMovementsByUserAndTypeAsync(MovementTypes.Transfer);
     }
 
     private async Task SubmitTransferAsync()
     {
         message = "";
+        isLoading = true;
+        StateHasChanged();
+
         var selectedAccount = accounts.FirstOrDefault(a => a.Id == fromAccountId);
-        if (selectedAccount == null)
-        {
-            SetError("Please select source account.");
-            return;
-        }
+        if (selectedAccount == null) { SetError("Моля изберете изходяща сметка."); isLoading = false; return; }
 
-        var iban = toIban.Trim();
-        if (string.IsNullOrWhiteSpace(iban))
-        {
-            SetError("Please enter recipient IBAN.");
-            return;
-        }
+        var iban = BankInputNormalizer.NormalizeIban(toIban);
+        if (string.IsNullOrWhiteSpace(iban)) { SetError("Моля въведете IBAN на получателя."); isLoading = false; return; }
 
-        if (string.Equals(iban, selectedAccount.Iban, StringComparison.OrdinalIgnoreCase))
-        {
-            SetError("Recipient IBAN cannot be the same as the source account.");
-            return;
-        }
+        if (string.Equals(iban, BankInputNormalizer.NormalizeIban(selectedAccount.Iban), StringComparison.OrdinalIgnoreCase))
+        { SetError("IBAN на получателя не може да е същия като изходящата сметка."); isLoading = false; return; }
 
-        if (amount <= 0)
-        {
-            SetError("Invalid amount.");
-            return;
-        }
+        if (amount <= 0) { SetError("Невалидна сума."); isLoading = false; return; }
 
         if (selectedAccount.Balance < amount)
-        {
-            SetError($"Insufficient funds. Available balance: {selectedAccount.Balance:F2}");
-            return;
-        }
+        { SetError($"Недостатъчна наличност. Баланс: {selectedAccount.Balance:F2}"); isLoading = false; return; }
 
         var toAccount = await AccountService.GetAccountByIbanAsync(iban);
-        if (toAccount == null)
-        {
-            SetError("IBAN not found.");
-            return;
-        }
+        if (toAccount == null) { SetError("IBAN не е намерен."); isLoading = false; return; }
 
-        var success = await TransferService.TransferAsync(new TransferRequest
+        var (success, errorMessage) = await TransferService.TransferAsync(new TransferRequest
         {
             FromAccountId = selectedAccount.Id,
             ToAccountId = toAccount.Id,
@@ -163,13 +199,11 @@ else
             Description = description.Trim()
         });
 
-        if (!success)
-        {
-            SetError("Transfer failed.");
-            return;
-        }
+        isLoading = false;
 
-        message = "Transfer submitted for admin approval.";
+        if (!success) { SetError(BankInputNormalizer.ToDisplayError(errorMessage)); return; }
+
+        message = "Преводът е изпратен за одобрение от администратора.";
         messageClass = "alert-success";
         toIban = "";
         amount = 0;

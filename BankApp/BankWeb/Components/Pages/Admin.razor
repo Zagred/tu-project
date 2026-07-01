@@ -1,170 +1,344 @@
 @page "/admin"
 @inject ApiAuthService AuthService
 @inject AdminApiService AdminService
+@using BankShared.Utilities
 
-<PageTitle>Admin</PageTitle>
+<PageTitle>Административен панел — BankApp</PageTitle>
 
 @if (AuthService.CurrentUser == null)
 {
-    <section class="empty-state">
-        <h1>You are not logged in</h1>
-        <a class="btn btn-primary" href="/login">Go to login</a>
-    </section>
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+        <div class="ucb-card" style="text-align:center;padding:40px;max-width:360px;">
+            <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;">Не сте влезли в системата</p>
+            <a class="btn-ucb-primary" href="/login" style="text-decoration:none;display:block;">Към вход</a>
+        </div>
+    </div>
 }
 else if (!AuthService.IsAdmin)
 {
-    <section class="empty-state">
-        <h1>Access denied</h1>
-        <p class="text-muted">This page is only available for the admin user.</p>
-    </section>
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+        <div class="ucb-card" style="text-align:center;padding:40px;max-width:360px;">
+            <div style="font-size:32px;margin-bottom:16px;">🔒</div>
+            <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">Забранен достъп</div>
+            <p style="font-size:13px;color:var(--text-muted);">Тази страница е само за администратори.</p>
+        </div>
+    </div>
 }
 else
 {
-    <div class="page-heading">
-        <div>
-            <h1>Admin</h1>
-            <p class="text-muted">Manage accounts, cards, POS payments and pending transfers.</p>
-        </div>
-        <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
-    </div>
-
     @if (!string.IsNullOrEmpty(message))
     {
-        <p class="alert @messageClass">@message</p>
+        <div class="@(messageClass.Contains("danger") ? "ucb-alert-danger" : "ucb-alert-success")"
+             style="margin-bottom:14px;">
+            @message
+        </div>
     }
 
-    <section class="split-layout">
-        <div class="tool-panel">
-            <h2>Create card</h2>
-            <div class="form-grid">
-                <label>
-                    User
-                    <select class="form-select" @bind="selectedUser" @bind:after="UpdateAccountSelection">
+    <!-- STAT CARDS -->
+    <div class="grid-3" style="margin-bottom:14px;">
+        <div class="ucb-card">
+            <div class="stat-icon navy">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="var(--navy)" stroke-width="1.6" stroke-linecap="round">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                </svg>
+            </div>
+            <div class="section-label">Потребители</div>
+            <div class="stat-value">@users.Count</div>
+        </div>
+        <div class="ucb-card">
+            <div class="stat-icon green">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="var(--green)" stroke-width="1.4" stroke-linecap="round">
+                    <rect x="1" y="4" width="22" height="16" rx="2" />
+                    <line x1="1" y1="10" x2="23" y2="10" />
+                </svg>
+            </div>
+            <div class="section-label">Банкови сметки</div>
+            <div class="stat-value green">@accounts.Count</div>
+        </div>
+        <div class="ucb-card">
+            <div class="stat-icon amber">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="var(--amber)" stroke-width="2" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+            </div>
+            <div class="section-label">Чакащи одобрение</div>
+            <div class="stat-value amber">@pendingTransfers.Count</div>
+        </div>
+    </div>
+
+    <div class="grid-2" style="align-items:start;margin-bottom:14px;">
+
+        <!-- LEFT: Accounts + Pending -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+
+            <!-- All accounts -->
+            <div class="ucb-card">
+                <div class="section-title" style="margin-bottom:14px;">Всички банкови сметки</div>
+                <div class="ucb-table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Потребител</th>
+                                <th>IBAN</th>
+                                <th>Роля</th>
+                                <th style="text-align:right;">Баланс</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var account in accounts)
+                            {
+                                <tr>
+                                    <td style="font-weight:600;">@account.Username</td>
+                                    <td style="font-family:monospace;font-size:11px;">@account.Iban</td>
+                                    <td><span class="badge-ok">@account.Role</span></td>
+                                    <td style="text-align:right;font-weight:700;color:var(--green);">
+                                        @account.Balance.ToString("F2") @account.Currency
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pending transfers -->
+            <div class="ucb-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <div class="section-title">Чакащи одобрение</div>
+                    @if (pendingTransfers.Count > 0)
+                    {
+                        <span class="badge-pending">@pendingTransfers.Count чакащи</span>
+                    }
+                </div>
+                @if (pendingTransfers.Count == 0)
+                {
+                    <p style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px 0;">
+                        Няма чакащи преводи.
+                    </p>
+                }
+                else
+                {
+                    @foreach (var transfer in pendingTransfers)
+                    {
+                        <div style="background:#FFFBEB;border:0.5px solid #FDE68A;border-radius:8px;padding:14px;margin-bottom:8px;">
+                            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
+                                <div>
+                                    <div style="font-size:13px;font-weight:600;color:var(--text-primary);">
+                                        @(string.IsNullOrEmpty(transfer.Description) ? "Превод" : transfer.Description)
+                                    </div>
+                                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+                                        От: @transfer.FromAccount · @transfer.MovementDateTime.ToString("dd.MM.yyyy HH:mm")
+                                    </div>
+                                </div>
+                                <div style="font-size:15px;font-weight:700;color:var(--amber);">
+                                    @transfer.Amount.ToString("F2") лв
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn-sm-approve" @onclick="() => ApproveTransferAsync(transfer.MovementId)">
+                                    ✓ Одобри
+                                </button>
+                                <button class="btn-sm-reject" @onclick="() => RejectTransferAsync(transfer.MovementId)">
+                                    ✕ Откажи
+                                </button>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+        </div>
+
+        <!-- RIGHT: Create card + POS -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+
+            <!-- Create card -->
+            <div class="ucb-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                    <div style="width:32px;height:32px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                             stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="4" width="22" height="16" rx="2" />
+                            <line x1="1" y1="10" x2="23" y2="10" />
+                        </svg>
+                    </div>
+                    <div style="font-size:14px;font-weight:700;color:var(--text-primary);">Издай карта</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label">ПОТРЕБИТЕЛ</label>
+                    <select class="ucb-select" @bind="selectedUser" @bind:after="UpdateAccountSelection">
                         @foreach (var user in users)
                         {
                             <option value="@user">@user</option>
                         }
                     </select>
-                </label>
-                <label>
-                    Account
-                    <select class="form-select" @bind="selectedAccountId" @bind:after="UpdateCardSelection">
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label">БАНКОВА СМЕТКА</label>
+                    <select class="ucb-select" @bind="selectedAccountId" @bind:after="UpdateCardSelection">
                         @foreach (var account in selectedUserAccounts)
                         {
                             <option value="@account.AccountId">@account.DisplayText</option>
                         }
                     </select>
-                </label>
-                <label>
-                    Card type
-                    <select class="form-select" @bind="cardType">
-                        <option value="Debit">Debit</option>
-                        <option value="Credit">Credit</option>
-                    </select>
-                </label>
-            </div>
-            <button class="btn btn-primary" type="button" @onclick="CreateCardAsync">Create card</button>
-        </div>
+                </div>
 
-        <div class="tool-panel">
-            <h2>POS payment</h2>
-            <div class="form-grid">
-                <label>
-                    Card
-                    <select class="form-select" @bind="selectedCardId">
+                <div class="form-group">
+                    <label class="field-label">ВИД КАРТА</label>
+                    <select class="ucb-select" @bind="cardType">
+                        <option value="Debit">Дебитна</option>
+                        <option value="Credit">Кредитна</option>
+                    </select>
+                </div>
+
+                <button class="btn-ucb-navy" style="width:100%;" @onclick="CreateCardAsync">
+                    Издай карта за сметката
+                </button>
+            </div>
+
+            <!-- Add funds -->
+            <div class="ucb-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                    <div style="width:32px;height:32px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                             stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                    </div>
+                    <div style="font-size:14px;font-weight:700;color:var(--text-primary);">Add money to user</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label">AMOUNT (BGN)</label>
+                    <input class="ucb-input" type="number" step="0.01" placeholder="0,00" @bind="fundAmount" />
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label">DESCRIPTION</label>
+                    <input class="ucb-input" placeholder="Admin deposit" @bind="fundDescription" />
+                </div>
+
+                <button class="btn-ucb-navy" style="width:100%;" @onclick="AddFundsAsync">
+                    Add money to selected account
+                </button>
+            </div>
+
+            <!-- Transfer between accounts -->
+            <div class="ucb-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                    <div style="width:32px;height:32px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                             stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="4" x2="12" y2="20" />
+                            <polyline points="4 12 12 4 20 12" />
+                            <line x1="20" y1="4" x2="20" y2="20" />
+                        </svg>
+                    </div>
+                    <div style="font-size:14px;font-weight:700;color:var(--text-primary);">Transfer between accounts</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label">FROM ACCOUNT</label>
+                    <select class="ucb-select" @bind="transferFromAccountId" @bind:after="UpdateTransferSelection">
+                        @foreach (var account in accounts)
+                        {
+                            <option value="@account.AccountId">@account.Username - @account.Iban (@account.Balance.ToString("F2") @account.Currency)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label">TO ACCOUNT</label>
+                    <select class="ucb-select" @bind="transferToAccountId">
+                        @foreach (var account in accounts)
+                        {
+                            <option value="@account.AccountId">@account.Username - @account.Iban (@account.Balance.ToString("F2") @account.Currency)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label">AMOUNT (BGN)</label>
+                    <input class="ucb-input" type="number" step="0.01" placeholder="0,00" @bind="transferAmount" />
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label">DESCRIPTION</label>
+                    <input class="ucb-input" placeholder="Admin account transfer" @bind="transferDescription" />
+                </div>
+
+                <button class="btn-ucb-navy" style="width:100%;" @onclick="TransferBetweenAccountsAsync">
+                    Transfer money
+                </button>
+            </div>
+
+            <!-- POS transaction -->
+            <div class="ucb-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                    <div style="width:32px;height:32px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                             stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <line x1="8" y1="21" x2="16" y2="21" />
+                            <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
+                    </div>
+                    <div style="font-size:14px;font-weight:700;color:var(--text-primary);">Създай POS транзакция</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="field-label">КАРТА</label>
+                    <select class="ucb-select" @bind="selectedCardId">
                         @foreach (var card in selectedAccountCards)
                         {
                             <option value="@card.CardId">@card.DisplayText</option>
                         }
                     </select>
-                </label>
-                <label>
-                    Merchant
-                    <select class="form-select" @bind="selectedMerchantId" @bind:after="LoadLocationsAsync">
-                        @foreach (var merchant in merchants)
-                        {
-                            <option value="@merchant.MerchantId">@merchant.MerchantName (@merchant.MerchantCategory)</option>
-                        }
-                    </select>
-                </label>
-                <label>
-                    Location
-                    <select class="form-select" @bind="selectedLocationId">
-                        @foreach (var location in locations)
-                        {
-                            <option value="@location.LocationId">@location.DisplayText</option>
-                        }
-                    </select>
-                </label>
-                <label>
-                    Amount
-                    <input class="form-control" type="number" step="0.01" @bind="posAmount" />
-                </label>
-            </div>
-            <button class="btn btn-primary" type="button" @onclick="CreatePosPaymentAsync">Create POS payment</button>
-        </div>
-    </section>
+                </div>
 
-    <section class="split-layout">
-        <div>
-            <h2>Pending transfers</h2>
-            <div class="table-responsive">
-                <table class="table table-sm align-middle">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>From account</th>
-                            <th>Description</th>
-                            <th class="text-end">Amount</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var transfer in pendingTransfers)
-                        {
-                            <tr>
-                                <td>@transfer.MovementDateTime.ToString("dd.MM.yyyy HH:mm")</td>
-                                <td>@transfer.FromAccount</td>
-                                <td>@transfer.Description</td>
-                                <td class="text-end">@transfer.Amount.ToString("F2") @transfer.Currency</td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-success" type="button" @onclick="() => ApproveTransferAsync(transfer.MovementId)">Approve</button>
-                                    <button class="btn btn-sm btn-outline-danger" type="button" @onclick="() => RejectTransferAsync(transfer.MovementId)">Reject</button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                <div class="grid-2" style="gap:10px;">
+                    <div class="form-group">
+                        <label class="field-label">ТЪРГОВЕЦ</label>
+                        <select class="ucb-select" @bind="selectedMerchantId" @bind:after="LoadLocationsAsync">
+                            @foreach (var merchant in merchants)
+                            {
+                                <option value="@merchant.MerchantId">@merchant.MerchantName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="field-label">ЛОКАЦИЯ</label>
+                        <select class="ucb-select" @bind="selectedLocationId">
+                            @foreach (var location in locations)
+                            {
+                                <option value="@location.LocationId">@location.DisplayText</option>
+                            }
+                        </select>
+                    </div>
+                </div>
 
-        <div>
-            <h2>Accounts</h2>
-            <div class="table-responsive">
-                <table class="table table-sm align-middle">
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>IBAN</th>
-                            <th>Role</th>
-                            <th class="text-end">Balance</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var account in accounts)
-                        {
-                            <tr>
-                                <td>@account.Username</td>
-                                <td>@account.Iban</td>
-                                <td>@account.Role</td>
-                                <td class="text-end">@account.Balance.ToString("F2") @account.Currency</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                <div class="form-group">
+                    <label class="field-label">СУМА (BGN)</label>
+                    <input class="ucb-input" type="number" step="0.01" placeholder="0,00" @bind="posAmount" />
+                </div>
+
+                <button class="btn-ucb-primary" @onclick="CreatePosPaymentAsync">
+                    Създай POS плащане
+                </button>
             </div>
+
         </div>
-    </section>
+    </div>
 }
 
 @code {
@@ -182,6 +356,12 @@ else
     private int selectedMerchantId;
     private int selectedLocationId;
     private string cardType = "Debit";
+    private decimal fundAmount;
+    private string fundDescription = "";
+    private int transferFromAccountId;
+    private int transferToAccountId;
+    private decimal transferAmount;
+    private string transferDescription = "";
     private decimal posAmount;
     private string message = "";
     private string messageClass = "alert-success";
@@ -189,7 +369,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         await AuthService.InitializeAsync();
-
         if (AuthService.IsAdmin)
             await LoadDataAsync();
     }
@@ -206,6 +385,7 @@ else
             selectedUser = users[0];
 
         UpdateAccountSelection();
+        UpdateTransferSelection();
 
         if (selectedMerchantId == 0 && merchants.Count > 0)
             selectedMerchantId = merchants[0].MerchantId;
@@ -215,34 +395,34 @@ else
 
     private void UpdateAccountSelection()
     {
-        selectedUserAccounts = accounts
-            .Where(a => a.Username == selectedUser)
-            .OrderBy(a => a.Iban)
-            .ToList();
-
+        selectedUserAccounts = accounts.Where(a => a.Username == selectedUser)
+            .OrderBy(a => a.Iban).ToList();
         if (!selectedUserAccounts.Any(a => a.AccountId == selectedAccountId))
             selectedAccountId = selectedUserAccounts.FirstOrDefault()?.AccountId ?? 0;
-
         UpdateCardSelection();
     }
 
     private void UpdateCardSelection()
     {
-        selectedAccountCards = cards
-            .Where(c => c.AccountId == selectedAccountId)
-            .OrderBy(c => c.MaskedCardNumber)
-            .ToList();
-
+        selectedAccountCards = cards.Where(c => c.AccountId == selectedAccountId)
+            .OrderBy(c => c.MaskedCardNumber).ToList();
         if (!selectedAccountCards.Any(c => c.CardId == selectedCardId))
             selectedCardId = selectedAccountCards.FirstOrDefault()?.CardId ?? 0;
     }
 
+    private void UpdateTransferSelection()
+    {
+        if (!accounts.Any(a => a.AccountId == transferFromAccountId))
+            transferFromAccountId = accounts.FirstOrDefault()?.AccountId ?? 0;
+
+        if (!accounts.Any(a => a.AccountId == transferToAccountId) || transferToAccountId == transferFromAccountId)
+            transferToAccountId = accounts.FirstOrDefault(a => a.AccountId != transferFromAccountId)?.AccountId ?? 0;
+    }
+
     private async Task LoadLocationsAsync()
     {
-        locations = selectedMerchantId == 0
-            ? new List<AdminLocationDto>()
+        locations = selectedMerchantId == 0 ? new()
             : await AdminService.GetLocationsByMerchantAsync(selectedMerchantId);
-
         if (!locations.Any(l => l.LocationId == selectedLocationId))
             selectedLocationId = locations.FirstOrDefault()?.LocationId ?? 0;
     }
@@ -250,11 +430,7 @@ else
     private async Task CreateCardAsync()
     {
         message = "";
-        if (selectedAccountId == 0)
-        {
-            SetError("Please select an account.");
-            return;
-        }
+        if (selectedAccountId == 0) { SetError("Моля изберете сметка."); return; }
 
         var card = await AdminService.CreateCardAsync(new CreateCardRequest
         {
@@ -262,37 +438,66 @@ else
             CardType = cardType
         });
 
-        if (card == null)
-        {
-            SetError("Failed to create card.");
-            return;
-        }
+        if (card == null) { SetError("Грешка при създаване на карта."); return; }
 
-        message = $"Card created: {card.DisplayText}";
+        message = $"Картата е създадена: {card.DisplayText}";
         messageClass = "alert-success";
+        await LoadDataAsync();
+    }
+
+    private async Task AddFundsAsync()
+    {
+        message = "";
+        if (selectedAccountId == 0) { SetError("Моля изберете сметка."); return; }
+        if (fundAmount <= 0) { SetError("Невалидна сума."); return; }
+
+        var (success, errorMessage) = await AdminService.AddFundsAsync(new AdminAddFundsRequest
+        {
+            AccountId = selectedAccountId,
+            Amount = fundAmount,
+            Description = fundDescription.Trim()
+        });
+
+        if (!success) { SetError($"Грешка: {errorMessage}"); return; }
+
+        message = "Парите са добавени успешно.";
+        messageClass = "alert-success";
+        fundAmount = 0;
+        fundDescription = "";
+        await LoadDataAsync();
+    }
+
+    private async Task TransferBetweenAccountsAsync()
+    {
+        message = "";
+        if (transferFromAccountId == 0) { SetError("Please select source account."); return; }
+        if (transferToAccountId == 0) { SetError("Please select destination account."); return; }
+        if (transferFromAccountId == transferToAccountId) { SetError("Source and destination accounts must be different."); return; }
+        if (transferAmount <= 0) { SetError("Invalid amount."); return; }
+
+        var (success, errorMessage) = await AdminService.TransferBetweenAccountsAsync(new AdminAccountTransferRequest
+        {
+            FromAccountId = transferFromAccountId,
+            ToAccountId = transferToAccountId,
+            Amount = transferAmount,
+            Description = transferDescription.Trim()
+        });
+
+        if (!success) { SetError($"Error: {BankInputNormalizer.ToDisplayError(errorMessage)}"); return; }
+
+        message = "Transfer completed successfully.";
+        messageClass = "alert-success";
+        transferAmount = 0;
+        transferDescription = "";
         await LoadDataAsync();
     }
 
     private async Task CreatePosPaymentAsync()
     {
         message = "";
-        if (selectedCardId == 0)
-        {
-            SetError("Please select a card.");
-            return;
-        }
-
-        if (selectedLocationId == 0)
-        {
-            SetError("Please select a location.");
-            return;
-        }
-
-        if (posAmount <= 0)
-        {
-            SetError("Please enter a valid amount.");
-            return;
-        }
+        if (selectedCardId == 0) { SetError("Моля изберете карта."); return; }
+        if (selectedLocationId == 0) { SetError("Моля изберете локация."); return; }
+        if (posAmount <= 0) { SetError("Невалидна сума."); return; }
 
         var (success, errorMessage) = await AdminService.CreatePosTransactionAsync(new PosTransactionRequest
         {
@@ -301,13 +506,9 @@ else
             Amount = posAmount
         });
 
-        if (!success)
-        {
-            SetError($"Failed: {errorMessage}");
-            return;
-        }
+        if (!success) { SetError($"Грешка: {errorMessage}"); return; }
 
-        message = "POS transaction created successfully.";
+        message = "POS транзакцията е създадена успешно.";
         messageClass = "alert-success";
         posAmount = 0;
         await LoadDataAsync();
@@ -315,25 +516,19 @@ else
 
     private async Task ApproveTransferAsync(int movementId)
     {
-        message = await AdminService.ApproveTransferAsync(movementId)
-            ? "Transfer approved successfully."
-            : "Failed to approve transfer.";
-        messageClass = message.StartsWith("Failed", StringComparison.Ordinal) ? "alert-danger" : "alert-success";
+        var ok = await AdminService.ApproveTransferAsync(movementId);
+        message = ok ? "Преводът е одобрен." : "Грешка при одобрение.";
+        messageClass = ok ? "alert-success" : "alert-danger";
         await LoadDataAsync();
     }
 
     private async Task RejectTransferAsync(int movementId)
     {
-        message = await AdminService.RejectTransferAsync(movementId)
-            ? "Transfer rejected successfully."
-            : "Failed to reject transfer.";
-        messageClass = message.StartsWith("Failed", StringComparison.Ordinal) ? "alert-danger" : "alert-success";
+        var ok = await AdminService.RejectTransferAsync(movementId);
+        message = ok ? "Преводът е отказан." : "Грешка при отказ.";
+        messageClass = ok ? "alert-success" : "alert-danger";
         await LoadDataAsync();
     }
 
-    private void SetError(string text)
-    {
-        message = text;
-        messageClass = "alert-danger";
-    }
+    private void SetError(string text) { message = text; messageClass = "alert-danger"; }
 }

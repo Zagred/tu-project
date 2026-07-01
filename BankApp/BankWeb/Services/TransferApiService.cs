@@ -8,9 +8,9 @@ namespace BankWeb.Services
         {
         }
 
-        public async Task<bool> TransferAsync(TransferRequest request)
+        public async Task<(bool Success, string? ErrorMessage)> TransferAsync(TransferRequest request)
         {
-            return await PostJsonAsync("api/transfers", request);
+            return await PostJsonForOutcomeAsync("api/transfers", request);
         }
     }
 }

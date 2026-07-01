@@ -5,160 +5,213 @@
 @inject AssistantApiService AssistantService
 @inject BudgetReportApiService BudgetReportService
 
-<PageTitle>Payments</PageTitle>
+<PageTitle>Плащания — BankApp</PageTitle>
 
 @if (AuthService.CurrentUser == null)
 {
-    <section class="empty-state">
-        <h1>You are not logged in</h1>
-        <a class="btn btn-primary" href="/login">Go to login</a>
-    </section>
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+        <div class="ucb-card" style="text-align:center;padding:40px;max-width:360px;">
+            <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;">Не сте влезли в системата</p>
+            <a class="btn-ucb-primary" href="/login" style="text-decoration:none;display:block;">Към вход</a>
+        </div>
+    </div>
 }
 else
 {
-    <div class="page-heading">
-        <div>
-            <h1>Payments</h1>
-            <p class="text-muted">All payments with filters by month, category, type, account and status.</p>
-        </div>
-        <div class="actions">
-            <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
-            <button class="btn btn-outline-secondary" type="button" @onclick="LoadAdviceAsync">AI Advice</button>
-            <button class="btn btn-primary" type="button" disabled="@isReportSending" @onclick="SendMonthlyReportAsync">
-                @(isReportSending ? "Sending..." : "Email report")
-            </button>
+    <!-- SUMMARY HERO -->
+    <div class="ucb-hero-card" style="margin-bottom:14px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+            <div>
+                <p style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:10px;">Разходи — последните 7 дни</p>
+                <div class="chart-bars" style="margin-bottom:8px;">
+                    @foreach (var bar in chartBars)
+                    {
+                        <div class="chart-bar-wrap">
+                            <div class="chart-fill @(bar.DayLabel == DateTime.Today.ToString("dd") ? "today" : "")"
+                                 style="height:@bar.Height.ToString("F0")px;"></div>
+                            <div class="chart-day" style="color:rgba(255,255,255,0.35);">@bar.DayLabel</div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;text-align:right;">
+                <div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.4);">Общо приходи</div>
+                    <div style="font-size:18px;font-weight:700;color:#4ADE80;">@totalIncome.ToString("F2") лв</div>
+                </div>
+                <div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.4);">Разходи карта</div>
+                    <div style="font-size:18px;font-weight:700;color:#F87171;">@totalSpent.ToString("F2") лв</div>
+                </div>
+                <button @onclick="LoadAdviceAsync" disabled="@isAdviceLoading"
+                        style="background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;margin-top:4px;">
+                    @(isAdviceLoading ? "Генериране..." : "AI Съвет")
+                </button>
+                <button @onclick="SendMonthlyReportAsync" disabled="@isReportSending"
+                        style="background:#fff;color:var(--navy);border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">
+                    @(isReportSending ? "Sending..." : "Email report")
+                </button>
+            </div>
         </div>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(reportMessage))
     {
-        <p class="alert @reportMessageClass">@reportMessage</p>
-    }
-
-    @if (isAdviceLoading)
-    {
-        <p class="alert alert-info">Generating financial advice...</p>
+        <div class="ucb-card" style="margin-bottom:14px;border-left:3px solid @reportMessageColor;">
+            <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin:0;">@reportMessage</p>
+        </div>
     }
 
     @if (!string.IsNullOrWhiteSpace(aiAdvice))
     {
-        <section class="tool-panel">
-            <h2>AI Financial Assistant</h2>
-            <p>@aiAdvice</p>
-        </section>
+        <div class="ucb-card" style="margin-bottom:14px;border-left:3px solid var(--navy);">
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">AI Финансов Асистент</div>
+            <p style="font-size:13px;color:var(--text-muted);line-height:1.6;">@aiAdvice</p>
+        </div>
     }
 
-    <section class="metrics">
-        <div class="metric"><span>Total Spent</span><strong class="amount-negative">@totalSpent.ToString("F2") BGN</strong></div>
-        <div class="metric"><span>Total Income</span><strong class="amount-positive">@totalIncome.ToString("F2") BGN</strong></div>
-        <div class="metric"><span>Visible payments</span><strong>@filteredPayments.Count</strong></div>
-        <div class="metric"><span>All payments</span><strong>@payments.Count</strong></div>
-    </section>
+    <div class="grid-2" style="align-items:start;gap:14px;">
 
-    <section class="tool-panel">
-        <h2>Filters</h2>
-        <div class="filter-grid">
-            <label>
-                Month
-                <input class="form-control" type="month" value="@selectedMonth" @onchange="OnMonthChanged" />
-            </label>
-            <label>
-                Category
-                <select class="form-select" @bind="selectedCategory" @bind:after="ApplyFilters">
-                    <option value="all">All</option>
-                    <option value="expense">Expense</option>
-                    <option value="income">Income</option>
-                </select>
-            </label>
-            <label>
-                Type
-                <select class="form-select" @bind="selectedType" @bind:after="ApplyFilters">
-                    <option value="@MovementTypes.All">All</option>
-                    <option value="@MovementTypes.CardPayment">Card payment</option>
-                    <option value="@MovementTypes.Transfer">Transfer</option>
-                    <option value="@MovementTypes.CashWithdrawal">Cash withdrawal</option>
-                    <option value="@MovementTypes.Deposit">Deposit</option>
-                    <option value="@MovementTypes.Fee">Fee</option>
-                </select>
-            </label>
-            <label>
-                Account
-                <select class="form-select" @bind="selectedAccountId" @bind:after="ApplyFilters">
-                    <option value="0">All</option>
-                    @foreach (var account in accounts)
-                    {
-                        <option value="@account.Id">@account.Iban</option>
-                    }
-                </select>
-            </label>
-            <label>
-                Status
-                <select class="form-select" @bind="selectedStatus" @bind:after="ApplyFilters">
-                    <option value="all">All</option>
-                    @foreach (var status in statuses)
-                    {
-                        <option value="@status">@status</option>
-                    }
-                </select>
-            </label>
-            <label>
-                Search
-                <input class="form-control" @bind="searchText" @bind:after="ApplyFilters" placeholder="Description or reference" />
-            </label>
-        </div>
-        <button class="btn btn-outline-secondary" type="button" @onclick="ClearFilters">Clear filters</button>
-    </section>
+        <!-- FILTERS -->
+        <div class="ucb-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div class="section-title">Филтри</div>
+                <button @onclick="ClearFilters"
+                        style="background:#F3F4F6;border:0.5px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--text-muted);cursor:pointer;">
+                    Изчисти
+                </button>
+            </div>
 
-    <section class="tool-panel">
-        <h2>Spending last 7 days</h2>
-        <div class="chart-bars">
-            @foreach (var bar in chartBars)
-            {
-                <div class="chart-bar">
-                    <div class="chart-fill" style="height:@bar.Height.ToString("F0")px"></div>
-                    <span>@bar.DayLabel</span>
-                    <small>@bar.AmountText</small>
+            <div class="form-group">
+                <label class="field-label">МЕСЕЦ</label>
+                <input class="ucb-input" type="month" value="@selectedMonth" @onchange="OnMonthChanged" />
+            </div>
+
+            <div class="grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="field-label">КАТЕГОРИЯ</label>
+                    <select class="ucb-select" @bind="selectedCategory" @bind:after="ApplyFilters">
+                        <option value="all">Всички</option>
+                        <option value="expense">Разходи</option>
+                        <option value="income">Приходи</option>
+                    </select>
                 </div>
+                <div class="form-group">
+                    <label class="field-label">ВИД</label>
+                    <select class="ucb-select" @bind="selectedType" @bind:after="ApplyFilters">
+                        <option value="@MovementTypes.All">Всички</option>
+                        <option value="@MovementTypes.CardPayment">Карта</option>
+                        <option value="@MovementTypes.Transfer">Превод</option>
+                        <option value="@MovementTypes.CashWithdrawal">Теглене</option>
+                        <option value="@MovementTypes.Deposit">Депозит</option>
+                        <option value="@MovementTypes.Fee">Такса</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="field-label">СМЕТКА</label>
+                    <select class="ucb-select" @bind="selectedAccountId" @bind:after="ApplyFilters">
+                        <option value="0">Всички</option>
+                        @foreach (var account in accounts)
+                        {
+                            <option value="@account.Id">@account.Iban</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="field-label">СТАТУС</label>
+                    <select class="ucb-select" @bind="selectedStatus" @bind:after="ApplyFilters">
+                        <option value="all">Всички</option>
+                        @foreach (var status in statuses)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="field-label">ТЪРСЕНЕ</label>
+                <input class="ucb-input" placeholder="Описание или референция"
+                       @bind="searchText" @bind:after="ApplyFilters" />
+            </div>
+
+            <!-- Stats -->
+            <div style="display:flex;gap:10px;margin-top:4px;">
+                <div style="flex:1;background:var(--green-bg);border-radius:8px;padding:12px;">
+                    <div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:0.4px;">ПРИХОДИ</div>
+                    <div style="font-size:18px;font-weight:700;color:var(--green);margin-top:4px;">@totalIncome.ToString("F2")</div>
+                    <div style="font-size:10px;color:var(--green);opacity:0.7;">лв</div>
+                </div>
+                <div style="flex:1;background:var(--red-light);border-radius:8px;padding:12px;">
+                    <div style="font-size:10px;font-weight:700;color:var(--red);letter-spacing:0.4px;">РАЗХОДИ</div>
+                    <div style="font-size:18px;font-weight:700;color:var(--red);margin-top:4px;">@totalSpent.ToString("F2")</div>
+                    <div style="font-size:10px;color:var(--red);opacity:0.7;">лв</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAYMENTS LIST -->
+        <div class="ucb-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div class="section-title">Всички плащания</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:11px;color:var(--text-muted);">@filteredPayments.Count резултата</span>
+                    <button @onclick="LoadDataAsync"
+                            style="background:#F3F4F6;border:0.5px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--text-muted);cursor:pointer;">
+                        Обнови
+                    </button>
+                </div>
+            </div>
+
+            @if (filteredPayments.Count == 0)
+            {
+                <p style="font-size:13px;color:var(--text-muted);text-align:center;padding:24px 0;">
+                    Няма плащания за показване.
+                </p>
+            }
+            else
+            {
+                @foreach (var payment in filteredPayments)
+                {
+                    <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:0.5px solid var(--border);">
+                        <div style="width:36px;height:36px;border-radius:9px;background:@(payment.IsExpense ? "var(--red-light)" : "var(--green-bg)");display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                 stroke="@(payment.IsExpense ? "var(--red)" : "var(--green)")"
+                                 stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                @if (payment.IsExpense)
+                                {
+                                    <rect x="1" y="4" width="22" height="16" rx="2" />
+                                    <line x1="1" y1="10" x2="23" y2="10" />
+                                }
+                                else
+                                {
+                                    <line x1="12" y1="19" x2="12" y2="5" />
+                                    <polyline points="5 12 12 19 19 12" />
+                                }
+                            </svg>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;font-weight:600;color:var(--text-primary);">@payment.MovementTypeDisplay</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+                                @payment.Description · @payment.MovementDateTime.ToString("dd.MM.yyyy HH:mm")
+                            </div>
+                            <span class="badge-ok" style="margin-top:4px;display:inline-block;">@payment.Status</span>
+                        </div>
+                        <div style="text-align:right;flex-shrink:0;">
+                            <div style="font-size:14px;font-weight:700;color:@(payment.IsExpense ? "var(--red)" : "var(--green)");">
+                                @payment.AmountText
+                            </div>
+                            <div style="font-size:10px;color:var(--text-muted);">@payment.Currency</div>
+                        </div>
+                    </div>
+                }
             }
         </div>
-    </section>
 
-    <section class="tool-panel">
-        <div class="table-toolbar">
-            <h2>All Payments</h2>
-            <span class="text-muted">@filteredPayments.Count result(s)</span>
-        </div>
-
-        <div class="table-responsive">
-            <table class="table table-sm align-middle">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Status</th>
-                        <th>Reference</th>
-                        <th class="text-end">Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var payment in filteredPayments)
-                    {
-                        <tr>
-                            <td>@payment.MovementDateTime.ToString("dd.MM.yyyy HH:mm")</td>
-                            <td>@payment.MovementTypeDisplay</td>
-                            <td>@payment.Category</td>
-                            <td>@payment.Description</td>
-                            <td>@payment.Status</td>
-                            <td>@payment.ReferenceNumber</td>
-                            <td class="text-end @(payment.IsExpense ? "amount-negative" : "amount-positive")">@payment.AmountText @payment.Currency</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
+    </div>
 }
 
 @code {
@@ -178,37 +231,12 @@ else
     private string aiAdvice = "";
     private bool isAdviceLoading;
     private string reportMessage = "";
-    private string reportMessageClass = "alert-success";
+    private string reportMessageColor = "var(--green)";
     private bool isReportSending;
-
-    private async Task LoadAdviceAsync()
-    {
-        isAdviceLoading = true;
-        aiAdvice = "";
-
-        aiAdvice = await AssistantService.GetAdviceAsync();
-
-        isAdviceLoading = false;
-    }
-
-    private async Task SendMonthlyReportAsync()
-    {
-        isReportSending = true;
-        reportMessage = "";
-
-        var message = await BudgetReportService.SendMonthlyReportAsync();
-        reportMessage = message;
-        reportMessageClass = message.Contains("success", StringComparison.OrdinalIgnoreCase)
-            ? "alert-success"
-            : "alert-danger";
-
-        isReportSending = false;
-    }
 
     protected override async Task OnInitializedAsync()
     {
         await AuthService.InitializeAsync();
-
         if (AuthService.CurrentUser != null)
             await LoadDataAsync();
     }
@@ -217,15 +245,40 @@ else
     {
         accounts = await AccountService.GetMyAccountsAsync();
         payments = await MovementService.GetMyMovementsAsync();
-        statuses = payments
-            .Select(p => p.Status)
+        statuses = payments.Select(p => p.Status)
             .Where(s => !string.IsNullOrWhiteSpace(s))
-            .Distinct()
-            .OrderBy(s => s)
-            .ToList();
-
+            .Distinct().OrderBy(s => s).ToList();
         chartBars = BuildChartData(payments);
         ApplyFilters();
+    }
+
+    private async Task LoadAdviceAsync()
+    {
+        isAdviceLoading = true;
+        aiAdvice = "";
+        StateHasChanged();
+        aiAdvice = await AssistantService.GetAdviceAsync();
+        isAdviceLoading = false;
+    }
+
+    private async Task SendMonthlyReportAsync()
+    {
+        isReportSending = true;
+        reportMessage = "";
+        StateHasChanged();
+
+        try
+        {
+            var message = await BudgetReportService.SendMonthlyReportAsync();
+            reportMessage = message;
+            reportMessageColor = message.Contains("success", StringComparison.OrdinalIgnoreCase)
+                ? "var(--green)"
+                : "var(--red)";
+        }
+        finally
+        {
+            isReportSending = false;
+        }
     }
 
     private void ApplyFilters()
@@ -234,44 +287,24 @@ else
 
         if (!string.IsNullOrWhiteSpace(selectedMonth) &&
             DateTime.TryParse($"{selectedMonth}-01", out var month))
-        {
-            query = query.Where(p =>
-                p.MovementDateTime.Year == month.Year &&
-                p.MovementDateTime.Month == month.Month);
-        }
+            query = query.Where(p => p.MovementDateTime.Year == month.Year &&
+                                     p.MovementDateTime.Month == month.Month);
 
-        if (selectedCategory == "expense")
-            query = query.Where(p => p.IsExpense);
-        else if (selectedCategory == "income")
-            query = query.Where(p => !p.IsExpense);
+        if (selectedCategory == "expense") query = query.Where(p => p.IsExpense);
+        else if (selectedCategory == "income") query = query.Where(p => !p.IsExpense);
 
-        if (selectedType != MovementTypes.All)
-            query = query.Where(p => p.MovementType == selectedType);
-
-        if (selectedAccountId != 0)
-            query = query.Where(p => p.AccountId == selectedAccountId);
-
-        if (selectedStatus != MovementTypes.All)
-            query = query.Where(p => p.Status == selectedStatus);
+        if (selectedType != MovementTypes.All) query = query.Where(p => p.MovementType == selectedType);
+        if (selectedAccountId != 0) query = query.Where(p => p.AccountId == selectedAccountId);
+        if (selectedStatus != "all") query = query.Where(p => p.Status == selectedStatus);
 
         if (!string.IsNullOrWhiteSpace(searchText))
-        {
             query = query.Where(p =>
-                (p.Description ?? string.Empty).Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (p.Description ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
                 p.ReferenceNumber.Contains(searchText, StringComparison.OrdinalIgnoreCase));
-        }
 
-        filteredPayments = query
-            .OrderByDescending(p => p.MovementDateTime)
-            .ToList();
-
-        totalSpent = filteredPayments
-            .Where(p => p.IsExpense)
-            .Sum(p => p.Amount);
-
-        totalIncome = filteredPayments
-            .Where(p => !p.IsExpense)
-            .Sum(p => p.Amount);
+        filteredPayments = query.OrderByDescending(p => p.MovementDateTime).ToList();
+        totalSpent = filteredPayments.Where(p => p.IsExpense).Sum(p => p.Amount);
+        totalIncome = filteredPayments.Where(p => !p.IsExpense).Sum(p => p.Amount);
     }
 
     private void OnMonthChanged(ChangeEventArgs args)
@@ -282,39 +315,30 @@ else
 
     private void ClearFilters()
     {
-        selectedMonth = "";
-        selectedCategory = "all";
-        selectedType = MovementTypes.All;
-        selectedStatus = MovementTypes.All;
-        selectedAccountId = 0;
-        searchText = "";
+        selectedMonth = ""; selectedCategory = "all";
+        selectedType = MovementTypes.All; selectedStatus = "all";
+        selectedAccountId = 0; searchText = "";
         ApplyFilters();
     }
 
     private static List<ChartBar> BuildChartData(List<Movement> movements)
     {
         var today = DateTime.Today;
-        var lastSevenDays = Enumerable.Range(0, 7)
-            .Select(i => today.AddDays(i - 6))
+        var last7 = Enumerable.Range(0, 7).Select(i => today.AddDays(i - 6))
             .Select(day => new
             {
                 Day = day,
-                Amount = movements
-                    .Where(m => MovementTypes.IsExpense(m.MovementType))
-                    .Where(m => m.MovementDateTime.Date == day.Date)
-                    .Sum(m => m.Amount)
-            })
-            .ToList();
+                Amount = movements.Where(m => m.IsExpense &&
+                                              m.MovementDateTime.Date == day.Date).Sum(m => m.Amount)
+            }).ToList();
 
-        var maxAmount = lastSevenDays.Max(x => x.Amount);
-        if (maxAmount <= 0) maxAmount = 1;
+        var max = last7.Max(x => x.Amount);
+        if (max <= 0) max = 1;
 
-        return lastSevenDays
-            .Select(x => new ChartBar(
-                x.Day.ToString("dd"),
-                x.Amount > 0 ? x.Amount.ToString("F0") : "0",
-                Math.Max(10, (double)x.Amount / (double)maxAmount * 130)))
-            .ToList();
+        return last7.Select(x => new ChartBar(
+            x.Day.ToString("dd"),
+            x.Amount > 0 ? x.Amount.ToString("F0") : "0",
+            Math.Max(8, (double)x.Amount / (double)max * 64))).ToList();
     }
 
     private sealed record ChartBar(string DayLabel, string AmountText, double Height);

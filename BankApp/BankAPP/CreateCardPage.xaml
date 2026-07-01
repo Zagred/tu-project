@@ -2,22 +2,86 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="BankAPP.CreateCardPage"
-             Title="Create Card">
+             Title="Издай карта"
+             BackgroundColor="{StaticResource PageBg}">
+
     <ScrollView>
-        <VerticalStackLayout Padding="16" Spacing="16">
-            <Label Text="Create card for selected account" FontAttributes="Bold" FontSize="24" />
+        <VerticalStackLayout Spacing="0">
 
-            <Label Text="User" FontAttributes="Bold" />
-            <Label x:Name="UserLabel" />
+            <Grid BackgroundColor="{StaticResource NavyDeep}" Padding="20,48,20,28">
+                <Ellipse Fill="#07FFFFFF" WidthRequest="160" HeightRequest="160"
+                         HorizontalOptions="End" VerticalOptions="Start" Margin="0,-30,-30,0"/>
+                <VerticalStackLayout Spacing="6">
+                    <HorizontalStackLayout Spacing="10" Margin="0,0,0,20">
+                        <Border BackgroundColor="{StaticResource BrandRed}"
+                                StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                                WidthRequest="28" HeightRequest="28" Padding="0">
+                            <Path Data="M11.5 1L2 6v2h19V6M16 10v7M12 10v7M8 10v7M2 19h19M2 22h19"
+                                  Stroke="White" StrokeThickness="1.6"
+                                  StrokeLineCap="Round" StrokeLineJoin="Round"
+                                  WidthRequest="14" HeightRequest="14" Aspect="Uniform"
+                                  HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Border>
+                        <Label Text="BankApp" FontSize="14" FontAttributes="Bold" TextColor="White"/>
+                    </HorizontalStackLayout>
+                    <Label Text="Издай карта" FontSize="24" FontAttributes="Bold" TextColor="White"/>
+                    <Label Text="Създай дебитна карта за избран акаунт"
+                           FontSize="13" TextColor="#77FFFFFF"/>
+                </VerticalStackLayout>
+            </Grid>
 
-            <Label Text="Account" FontAttributes="Bold" />
-            <Label x:Name="AccountLabel" />
+            <Border BackgroundColor="White" StrokeThickness="0"
+                    StrokeShape="RoundRectangle 24,24,0,0"
+                    Padding="24,28,24,40" Margin="0,-16,0,0">
+                <VerticalStackLayout Spacing="0">
 
-            <Label Text="Card type" FontAttributes="Bold" />
-            <Picker x:Name="CardTypePicker" Title="Select card type" />
+                    <!-- Account info card -->
+                    <Border BackgroundColor="{StaticResource NavyDeep}"
+                            StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                            Padding="18,16" Margin="0,0,0,24">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Grid.Column="0" BackgroundColor="{StaticResource BrandRed}"
+                                    StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                                    WidthRequest="40" HeightRequest="40">
+                                <Path Data="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                                      Stroke="White" StrokeThickness="1.4"
+                                      StrokeLineCap="Round" StrokeLineJoin="Round"
+                                      WidthRequest="20" HeightRequest="20" Aspect="Uniform"
+                                      HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="3" Margin="12,0,0,0"
+                                                 VerticalOptions="Center">
+                                <Label Text="ПОТРЕБИТЕЛ" FontSize="9" TextColor="#77FFFFFF"
+                                       CharacterSpacing="0.5"/>
+                                <Label x:Name="UserLabel" Text="—" FontSize="14"
+                                       FontAttributes="Bold" TextColor="White"/>
+                                <Label Text="СМЕТКА" FontSize="9" TextColor="#77FFFFFF"
+                                       CharacterSpacing="0.5" Margin="0,4,0,0"/>
+                                <Label x:Name="AccountLabel" Text="—" FontSize="12"
+                                       TextColor="#CCFFFFff" FontFamily="OpenSansRegular"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
 
-            <Button Text="Create card" Clicked="OnCreateCardClicked" />
-            <Label x:Name="CardStatusLabel" FontSize="14" TextColor="Green" />
+                    <Label Text="ВИД КАРТА" Style="{StaticResource FieldLabel}"/>
+                    <Border Style="{StaticResource InputBorder}" HeightRequest="46" Margin="0,0,0,28">
+                        <Picker x:Name="CardTypePicker"
+                                Title="Избери вид карта"
+                                BackgroundColor="Transparent" FontSize="13"
+                                VerticalOptions="Center"/>
+                    </Border>
+
+                    <Button Text="Издай карта"
+                            Style="{StaticResource NavyBtn}"
+                            Clicked="OnCreateCardClicked"/>
+
+                    <Label x:Name="CardStatusLabel" FontSize="13"
+                           HorizontalOptions="Center"
+                           Margin="0,16,0,0"/>
+
+                </VerticalStackLayout>
+            </Border>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

@@ -17,29 +17,22 @@ namespace BankAPI.Services
             var request = new
             {
                 model = "mistral",
-                prompt,
+                prompt = prompt,
                 stream = false
             };
 
-            try
-            {
-                var response = await _httpClient.PostAsJsonAsync("api/generate", request);
+            var response = await _httpClient.PostAsJsonAsync("api/generate", request);
 
-                if (!response.IsSuccessStatusCode)
-                    return "AI assistant is currently unavailable.";
-
-                var json = await response.Content.ReadAsStringAsync();
-
-                using var doc = JsonDocument.Parse(json);
-
-                return doc.RootElement.TryGetProperty("response", out var responseElement)
-                    ? responseElement.GetString() ?? "No advice generated."
-                    : "No advice generated.";
-            }
-            catch (Exception)
-            {
+            if (!response.IsSuccessStatusCode)
                 return "AI assistant is currently unavailable.";
-            }
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            using var doc = JsonDocument.Parse(json);
+
+            return doc.RootElement
+                .GetProperty("response")
+                .GetString() ?? "No advice generated.";
         }
     }
 }

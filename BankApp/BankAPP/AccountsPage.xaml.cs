@@ -19,7 +19,6 @@ namespace BankAPP
         {
             InitializeComponent();
             NavigationPage.SetHasNavigationBar(this, false);
-
             _movementApiService = movementApiService;
             _accountApiService = accountApiService;
             _serviceProvider = serviceProvider;
@@ -28,7 +27,27 @@ namespace BankAPP
         protected override async void OnAppearing()
         {
             base.OnAppearing();
+            UpdateAdminNavigation();
             await LoadDataAsync();
+        }
+
+        private void UpdateAdminNavigation()
+        {
+            var isAdmin = SessionManager.IsAdmin;
+
+            try { SidebarAdminButton.IsVisible = isAdmin; } catch { }
+            try
+            {
+                MobileNavAdminItem.IsVisible = isAdmin;
+                MobileNavGrid.ColumnDefinitions.Clear();
+
+                for (var i = 0; i < (isAdmin ? 5 : 4); i++)
+                    MobileNavGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+
+                Grid.SetColumn(MobileNavLogoutItem, isAdmin ? 4 : 3);
+                Grid.SetColumnSpan(MobileNavSeparator, isAdmin ? 5 : 4);
+            }
+            catch { }
         }
 
         private async Task LoadDataAsync()
@@ -36,28 +55,40 @@ namespace BankAPP
             var accounts = await _accountApiService.GetMyAccountsAsync();
             var movements = await _movementApiService.GetMyMovementsAsync();
 
-            AccountsCollection.ItemsSource = accounts;
-            WelcomeLabel.Text = $"Здравей, {SessionManager.CurrentUsername}!";
-            LoadSummary(accounts, movements);
+            var username = SessionManager.CurrentUsername ?? "?";
+            var initial = username.Length > 0 ? username[0].ToString().ToUpper() : "?";
+
+            try { AccountsCollection.ItemsSource = accounts; } catch { }
+            try { AccountsCollectionMobile.ItemsSource = accounts; } catch { }
+
+            try { WelcomeLabel.Text = $"Здравей, {username}!"; } catch { }
+            try { WelcomeLabelM.Text = $"Добро утро,"; } catch { }
+            try { AvatarLabel.Text = initial; } catch { }
+            try { AvatarLabelM.Text = initial; } catch { }
+            try { SidebarUsernameLabel.Text = username; } catch { }
+            try { UsernameLabelM.Text = username; } catch { }
+
+            UpdateSummary(accounts, movements);
         }
 
-        private void LoadSummary(List<AccountDto> accounts, List<Movement> movements)
+        private void UpdateSummary(List<AccountDto> accounts, List<Movement> movements)
         {
             var totalBalance = accounts.Sum(a => a.Balance);
-            var totalDebit = movements.Where(m => MovementTypes.IsExpense(m.MovementType)).Sum(m => m.Amount);
-            var totalCredit = movements.Where(m => MovementTypes.IsIncome(m.MovementType)).Sum(m => m.Amount);
+            var completedMovements = movements
+                .Where(m => string.Equals(m.Status, "completed", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            var totalDebit = completedMovements.Where(m => m.IsExpense).Sum(m => m.Amount);
+            var totalCredit = completedMovements.Where(m => m.IsIncome).Sum(m => m.Amount);
 
-            BalanceLabel.Text = totalBalance.ToString("F2");
-            IncomeLabel.Text = totalCredit.ToString("F2");
-            ExpenseLabel.Text = totalDebit.ToString("F2");
-
-            BalanceLabelAlt.Text = totalBalance.ToString("F2");
-            IncomeLabelAlt.Text = totalCredit.ToString("F2");
-            ExpenseLabelAlt.Text = totalDebit.ToString("F2");
-
-            var username = SessionManager.CurrentUsername ?? "?";
-            AvatarLabel.Text = username.Length > 0 ? username[0].ToString().ToUpper() : "?";
-            SidebarUsernameLabel.Text = username;
+            try { BalanceLabel.Text = totalBalance.ToString("F2"); } catch { }
+            try { BalanceLabelM.Text = totalBalance.ToString("F2"); } catch { }
+            try { IncomeLabel.Text = totalCredit.ToString("F2"); } catch { }
+            try { IncomeLabelM.Text = totalCredit.ToString("F2"); } catch { }
+            try { ExpenseLabel.Text = totalDebit.ToString("F2"); } catch { }
+            try { ExpenseLabelM.Text = totalDebit.ToString("F2"); } catch { }
+            try { BalanceLabelAlt.Text = totalBalance.ToString("F2"); } catch { }
+            try { IncomeLabelAlt.Text = totalCredit.ToString("F2"); } catch { }
+            try { ExpenseLabelAlt.Text = totalDebit.ToString("F2"); } catch { }
         }
 
         private async void OnRefreshClicked(object sender, EventArgs e)
@@ -69,9 +100,7 @@ namespace BankAPP
         {
             bool confirm = await DisplayAlert("Logout", "Do you want to log out?", "Yes", "No");
             if (!confirm) return;
-
             SessionManager.Logout();
-
             var loginPage = _serviceProvider.GetRequiredService<LoginPage>();
             Application.Current!.MainPage = new NavigationPage(loginPage);
         }
@@ -92,14 +121,12 @@ namespace BankAPP
         {
             bool confirm = await DisplayAlert("Create Account", "Create a new account?", "Yes", "No");
             if (!confirm) return;
-
             var newAccount = await _accountApiService.CreateAccountAsync();
             if (newAccount == null)
             {
                 await DisplayAlert("Error", "Failed to create account", "OK");
                 return;
             }
-
             await DisplayAlert("Success", $"Account created: {newAccount.Iban}", "OK");
             await LoadDataAsync();
         }
@@ -112,6 +139,11 @@ namespace BankAPP
         private void OnNavigateToPayments(object sender, EventArgs e)
         {
             ((AppShell)Shell.Current).NavigateTo("Payments");
+        }
+
+        private void OnNavigateToAdmin(object sender, EventArgs e)
+        {
+            ((AppShell)Shell.Current).NavigateTo("Admin");
         }
     }
 }

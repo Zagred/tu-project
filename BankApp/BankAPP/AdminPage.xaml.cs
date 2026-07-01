@@ -1,5 +1,6 @@
 using BankAPP.Services;
 using BankShared.DTOs;
+using BankShared.Utilities;
 using System.Linq;
 
 namespace BankAPP
@@ -13,6 +14,7 @@ namespace BankAPP
         public AdminPage(AdminApiService adminApiService)
         {
             InitializeComponent();
+            NavigationPage.SetHasNavigationBar(this, false);
             _adminApiService = adminApiService;
         }
 
@@ -32,12 +34,15 @@ namespace BankAPP
                 MerchantPicker.ItemsSource = new List<AdminMerchantDto>();
                 LocationPicker.ItemsSource = new List<AdminLocationDto>();
                 CardPicker.ItemsSource = new List<AdminCardDto>();
+                TransferFromAccountPicker.ItemsSource = new List<AdminAccountDto>();
+                TransferToAccountPicker.ItemsSource = new List<AdminAccountDto>();
                 return;
             }
 
             StatusLabel.Text = string.Empty;
             _allAccounts = await _adminApiService.GetAllAccountsAsync();
             AccountsCollection.ItemsSource = _allAccounts;
+            UpdateAdminTransferSelection();
 
             var users = _allAccounts
                 .Select(a => a.Username)
@@ -51,8 +56,33 @@ namespace BankAPP
             UpdateAccountSelection();
 
             MerchantPicker.ItemsSource = await _adminApiService.GetMerchantsAsync();
-            MerchantPicker.SelectedIndex = MerchantPicker.ItemsSource is System.Collections.ICollection merchantCollection && merchantCollection.Count > 0 ? 0 : -1;
+            MerchantPicker.SelectedIndex = MerchantPicker.ItemsSource is System.Collections.ICollection merchantCollection
+                && merchantCollection.Count > 0 ? 0 : -1;
             await LoadLocationsAsync();
+            await UpdateStats();
+        }
+
+        private void UpdateAdminTransferSelection()
+        {
+            var accounts = _allAccounts
+                .OrderBy(a => a.Username)
+                .ThenBy(a => a.Iban)
+                .ToList();
+
+            TransferFromAccountPicker.ItemsSource = accounts;
+            TransferToAccountPicker.ItemsSource = accounts;
+
+            TransferFromAccountPicker.SelectedIndex = accounts.Count > 0 ? 0 : -1;
+            TransferToAccountPicker.SelectedIndex = accounts.Count > 1 ? 1 : -1;
+        }
+
+        private async Task UpdateStats()
+        {
+            try { UserCountLabel.Text = _allAccounts.Select(a => a.Username).Distinct().Count().ToString(); } catch { }
+            try { AccountCountLabel.Text = _allAccounts.Count.ToString(); } catch { }
+            var pending = await _adminApiService.GetPendingTransfersAsync();
+            try { PendingCountLabel.Text = pending.Count.ToString(); } catch { }
+            try { PendingBadgeLabel.Text = pending.Count.ToString(); } catch { }
         }
 
         private async Task LoadLocationsAsync()
@@ -64,7 +94,8 @@ namespace BankAPP
             }
 
             LocationPicker.ItemsSource = await _adminApiService.GetLocationsByMerchantAsync(merchant.MerchantId);
-            LocationPicker.SelectedIndex = LocationPicker.ItemsSource is System.Collections.ICollection locationCollection && locationCollection.Count > 0 ? 0 : -1;
+            LocationPicker.SelectedIndex = LocationPicker.ItemsSource is System.Collections.ICollection locationCollection
+                && locationCollection.Count > 0 ? 0 : -1;
         }
 
         private void UpdateAccountSelection()
@@ -72,7 +103,7 @@ namespace BankAPP
             if (UserPicker.SelectedItem is not string chosenUser)
             {
                 AccountPicker.ItemsSource = new List<AdminAccountDto>();
-                SelectedAccountBalanceLabel.Text = "Balance:";
+                SelectedAccountBalanceLabel.Text = "Баланс: —";
                 CardPicker.ItemsSource = new List<AdminCardDto>();
                 return;
             }
@@ -91,13 +122,9 @@ namespace BankAPP
         private void UpdateSelectedAccountBalance()
         {
             if (AccountPicker.SelectedItem is AdminAccountDto account)
-            {
-                SelectedAccountBalanceLabel.Text = $"Balance: {account.Balance:F2} {account.Currency}";
-            }
+                SelectedAccountBalanceLabel.Text = $"Баланс: {account.Balance:F2} {account.Currency}";
             else
-            {
-                SelectedAccountBalanceLabel.Text = "Balance:";
-            }
+                SelectedAccountBalanceLabel.Text = "Баланс: —";
         }
 
         private void UpdateCardSelection()
@@ -118,10 +145,7 @@ namespace BankAPP
             CardPicker.SelectedIndex = cards.Count > 0 ? 0 : -1;
         }
 
-        private void OnUserChanged(object sender, EventArgs e)
-        {
-            UpdateAccountSelection();
-        }
+        private void OnUserChanged(object sender, EventArgs e) => UpdateAccountSelection();
 
         private void OnAccountChanged(object sender, EventArgs e)
         {
@@ -139,20 +163,117 @@ namespace BankAPP
 
             var createCardPage = new CreateCardPage(_adminApiService);
             createCardPage.InitializeForAccount(account);
-            
-            // Hook up event to reload cards after creation
+
             createCardPage.CardCreated += async () =>
             {
                 _allCards = await _adminApiService.GetUserCardsAsync();
                 UpdateCardSelection();
             };
-            
+
             await Navigation.PushAsync(createCardPage);
         }
 
-        private async void OnMerchantChanged(object sender, EventArgs e)
+        private async void OnMerchantChanged(object sender, EventArgs e) => await LoadLocationsAsync();
+
+        private async void OnAddFundsClicked(object sender, EventArgs e)
         {
-            await LoadLocationsAsync();
+            if (!SessionManager.IsAdmin)
+            {
+                await DisplayAlert("Access denied", "Only admin can add money to accounts.", "OK");
+                return;
+            }
+
+            if (AccountPicker.SelectedItem is not AdminAccountDto account)
+            {
+                await DisplayAlert("Validation error", "Please select an account.", "OK");
+                return;
+            }
+
+            if (!BankInputNormalizer.TryParseAmount(AddFundsAmountEntry.Text, out var amount) || amount <= 0)
+            {
+                await DisplayAlert("Validation error", "Please enter a valid amount.", "OK");
+                return;
+            }
+
+            var request = new AdminAddFundsRequest
+            {
+                AccountId = account.AccountId,
+                Amount = amount,
+                Description = AddFundsDescriptionEntry.Text?.Trim() ?? string.Empty
+            };
+
+            var (success, errorMessage) = await _adminApiService.AddFundsAsync(request);
+            if (success)
+            {
+                StatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.Green;
+                StatusLabel.Text = "Money added successfully.";
+                AddFundsAmountEntry.Text = string.Empty;
+                AddFundsDescriptionEntry.Text = string.Empty;
+                await LoadAdminDashboardAsync();
+                await LoadPendingTransfersAsync();
+            }
+            else
+            {
+                StatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.Red;
+                StatusLabel.Text = $"Error: {BankInputNormalizer.ToDisplayError(errorMessage)}";
+            }
+        }
+
+        private async void OnAdminTransferClicked(object sender, EventArgs e)
+        {
+            if (!SessionManager.IsAdmin)
+            {
+                await DisplayAlert("Access denied", "Only admin can transfer between accounts.", "OK");
+                return;
+            }
+
+            if (TransferFromAccountPicker.SelectedItem is not AdminAccountDto fromAccount)
+            {
+                await DisplayAlert("Validation error", "Please select source account.", "OK");
+                return;
+            }
+
+            if (TransferToAccountPicker.SelectedItem is not AdminAccountDto toAccount)
+            {
+                await DisplayAlert("Validation error", "Please select destination account.", "OK");
+                return;
+            }
+
+            if (fromAccount.AccountId == toAccount.AccountId)
+            {
+                await DisplayAlert("Validation error", "Source and destination accounts must be different.", "OK");
+                return;
+            }
+
+            if (!BankInputNormalizer.TryParseAmount(AdminTransferAmountEntry.Text, out var amount) || amount <= 0)
+            {
+                await DisplayAlert("Validation error", "Please enter a valid amount.", "OK");
+                return;
+            }
+
+            var request = new AdminAccountTransferRequest
+            {
+                FromAccountId = fromAccount.AccountId,
+                ToAccountId = toAccount.AccountId,
+                Amount = amount,
+                Description = AdminTransferDescriptionEntry.Text?.Trim() ?? string.Empty
+            };
+
+            var (success, errorMessage) = await _adminApiService.TransferBetweenAccountsAsync(request);
+            if (success)
+            {
+                StatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.Green;
+                StatusLabel.Text = "Transfer completed successfully.";
+                AdminTransferAmountEntry.Text = string.Empty;
+                AdminTransferDescriptionEntry.Text = string.Empty;
+                await LoadAdminDashboardAsync();
+                await LoadPendingTransfersAsync();
+            }
+            else
+            {
+                StatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.Red;
+                StatusLabel.Text = $"Error: {BankInputNormalizer.ToDisplayError(errorMessage)}";
+            }
         }
 
         private async void OnCreatePosPaymentClicked(object sender, EventArgs e)
@@ -175,7 +296,7 @@ namespace BankAPP
                 return;
             }
 
-            if (!decimal.TryParse(AmountEntry.Text, out var amount) || amount <= 0)
+            if (!BankInputNormalizer.TryParseAmount(AmountEntry.Text, out var amount) || amount <= 0)
             {
                 await DisplayAlert("Validation error", "Please enter a valid amount.", "OK");
                 return;
@@ -192,7 +313,7 @@ namespace BankAPP
             if (success)
             {
                 StatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.Green;
-                StatusLabel.Text = "POS transaction created successfully.";
+                StatusLabel.Text = "POS транзакцията е създадена успешно.";
                 AmountEntry.Text = string.Empty;
                 await Task.Delay(2000);
                 await LoadAdminDashboardAsync();
@@ -200,7 +321,7 @@ namespace BankAPP
             else
             {
                 StatusLabel.TextColor = Microsoft.Maui.Graphics.Colors.Red;
-                StatusLabel.Text = $"Failed: {errorMessage}";
+                StatusLabel.Text = $"Грешка: {errorMessage}";
             }
         }
 
@@ -212,7 +333,10 @@ namespace BankAPP
                 return;
             }
 
-            PendingTransfersCollection.ItemsSource = await _adminApiService.GetPendingTransfersAsync();
+            var pending = await _adminApiService.GetPendingTransfersAsync();
+            PendingTransfersCollection.ItemsSource = pending;
+            try { PendingCountLabel.Text = pending.Count.ToString(); } catch { }
+            try { PendingBadgeLabel.Text = pending.Count.ToString(); } catch { }
         }
 
         private async void OnApproveTransferClicked(object sender, EventArgs e)
@@ -223,12 +347,12 @@ namespace BankAPP
             var success = await _adminApiService.ApproveTransferAsync(movementId);
             if (success)
             {
-                await DisplayAlert("Success", "Transfer approved successfully.", "OK");
+                await DisplayAlert("Успех", "Преводът е одобрен.", "OK");
                 await LoadPendingTransfersAsync();
             }
             else
             {
-                await DisplayAlert("Error", "Failed to approve transfer.", "OK");
+                await DisplayAlert("Грешка", "Неуспешно одобрение.", "OK");
             }
         }
 
@@ -240,13 +364,31 @@ namespace BankAPP
             var success = await _adminApiService.RejectTransferAsync(movementId);
             if (success)
             {
-                await DisplayAlert("Success", "Transfer rejected successfully.", "OK");
+                await DisplayAlert("Успех", "Преводът е отказан.", "OK");
                 await LoadPendingTransfersAsync();
             }
             else
             {
-                await DisplayAlert("Error", "Failed to reject transfer.", "OK");
+                await DisplayAlert("Грешка", "Неуспешно отказване.", "OK");
             }
+        }
+
+        private void OnNavigateToAccounts(object sender, EventArgs e) =>
+            ((AppShell)Shell.Current).NavigateTo("Accounts");
+
+        private void OnNavigateToTransfers(object sender, EventArgs e) =>
+            ((AppShell)Shell.Current).NavigateTo("Transfers");
+
+        private void OnNavigateToPayments(object sender, EventArgs e) =>
+            ((AppShell)Shell.Current).NavigateTo("Payments");
+
+        private async void OnLogoutClicked(object sender, EventArgs e)
+        {
+            bool confirm = await DisplayAlert("Logout", "Do you want to log out?", "Yes", "No");
+            if (!confirm) return;
+            SessionManager.Logout();
+            var loginPage = IPlatformApplication.Current!.Services.GetService<LoginPage>()!;
+            Application.Current!.MainPage = new NavigationPage(loginPage);
         }
     }
 }

@@ -14,13 +14,15 @@ namespace BankAPP
             RefreshAdminVisibility();
         }
 
-        private void RefreshAdminVisibility()
+        public void RefreshAdminVisibility()
         {
             AdminShell.IsVisible = Services.SessionManager.IsAdmin;
         }
 
         public void NavigateTo(string route)
         {
+            RefreshAdminVisibility();
+
             switch (route)
             {
                 case "Transfers":
@@ -33,7 +35,8 @@ namespace BankAPP
                     CurrentItem = AccountsShell;
                     break;
                 case "Admin":
-                    CurrentItem = AdminShell;
+                    if (Services.SessionManager.IsAdmin)
+                        CurrentItem = AdminShell;
                     break;
             }
         }

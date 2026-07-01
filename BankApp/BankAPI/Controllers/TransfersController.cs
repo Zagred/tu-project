@@ -14,10 +14,12 @@ namespace BankAPI.Controllers
     public class TransfersController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<TransfersController> _logger;
 
-        public TransfersController(AppDbContext context)
+        public TransfersController(AppDbContext context, ILogger<TransfersController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         private int GetUserId()
@@ -41,75 +43,67 @@ namespace BankAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Transfer(TransferRequest request)
         {
-            if (request.Amount <= 0)
-                return BadRequest("Invalid amount");
-
-            if (request.FromAccountId == request.ToAccountId)
-                return BadRequest("Cannot transfer to the same account");
-
-            var userId = GetUserId();
-            if (!IsAdmin())
-            {
-                var hasAccess = await _context.UserAccounts
-                    .AnyAsync(ua => ua.UserId == userId && ua.AccountId == request.FromAccountId);
-
-                if (!hasAccess)
-                    return Forbid("You can only submit transfers from your own account");
-            }
-
-            var fromAccount = await _context.Accounts
-                .FirstOrDefaultAsync(a => a.Id == request.FromAccountId);
-
-            var toAccount = await _context.Accounts
-                .FirstOrDefaultAsync(a => a.Id == request.ToAccountId);
-
-            if (fromAccount == null || toAccount == null)
-                return NotFound("Account not found");
-
-            if (fromAccount.Balance < request.Amount)
-                return BadRequest("Insufficient funds");
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
-                // Create pending debit movement (not updating balance yet)
+                if (request.Amount <= 0)
+                    return BadRequest("Invalid amount");
+
+                if (request.FromAccountId == request.ToAccountId)
+                    return BadRequest("Cannot transfer to the same account");
+
+                var userId = GetUserId();
+                if (!IsAdmin())
+                {
+                    var hasAccess = await _context.UserAccounts
+                        .AnyAsync(ua => ua.UserId == userId && ua.AccountId == request.FromAccountId);
+
+                    if (!hasAccess)
+                        return Forbid("You can only submit transfers from your own account");
+                }
+
+                var fromAccount = await _context.Accounts
+                    .FirstOrDefaultAsync(a => a.Id == request.FromAccountId);
+
+                var toAccount = await _context.Accounts
+                    .FirstOrDefaultAsync(a => a.Id == request.ToAccountId);
+
+                if (fromAccount == null || toAccount == null)
+                    return NotFound("Account not found");
+
+                if (!string.Equals(fromAccount.Currency, toAccount.Currency, StringComparison.OrdinalIgnoreCase))
+                    return BadRequest("Cannot transfer between accounts with different currencies");
+
+                if (fromAccount.Balance < request.Amount)
+                    return BadRequest("Insufficient funds");
+
+                var description = string.IsNullOrWhiteSpace(request.Description)
+                    ? "Transfer"
+                    : request.Description.Trim();
+
                 var debit = new Movement
                 {
                     AccountId = fromAccount.Id,
                     Amount = request.Amount,
                     MovementType = BankShared.Constants.MovementTypes.Transfer,
-                    Description = $"Transfer to account {toAccount.Id}: {request.Description}",
-                    Currency = "BGN",
-                    Status = "pending",  // Pending admin approval
-                    ReferenceNumber = Guid.NewGuid().ToString("N"),
-                    MovementDateTime = DateTime.Now
+                    Description = $"Transfer to account {toAccount.Id}: {description}",
+                    Currency = fromAccount.Currency,
+                    Status = "pending",
+                    ReferenceNumber = $"TRF{DateTime.UtcNow.Ticks}",
+                    MovementDateTime = DateTime.UtcNow
                 };
 
-                // Create pending credit movement
-                var credit = new Movement
-                {
-                    AccountId = toAccount.Id,
-                    Amount = request.Amount,
-                    MovementType = BankShared.Constants.MovementTypes.Transfer,
-                    Description = $"Transfer from account {fromAccount.Id}: {request.Description}",
-                    Currency = "BGN",
-                    Status = "pending",  // Pending admin approval
-                    ReferenceNumber = debit.ReferenceNumber,  // Link debit and credit
-                    MovementDateTime = DateTime.Now
-                };
-
-                _context.Movements.AddRange(debit, credit);
-
+                _context.Movements.Add(debit);
                 await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
 
                 return Ok(new { message = "Transfer submitted for approval. Please wait for admin confirmation." });
             }
-            catch
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return StatusCode(500, "Transfer failed");
+                _logger.LogError(ex, "Error submitting transfer from account {FromAccountId} to account {ToAccountId}",
+                    request.FromAccountId,
+                    request.ToAccountId);
+
+                return StatusCode(500, $"Transfer failed: {ex.GetBaseException().Message}");
             }
         }
     }

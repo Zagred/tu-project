@@ -123,8 +123,8 @@ else
     {
         movements = await MovementService.GetMovementsByUserAndTypeAsync(selectedFilter);
         totalBalance = accounts.Sum(a => a.Balance);
-        totalDebit = movements.Where(m => MovementTypes.IsExpense(m.MovementType)).Sum(m => m.Amount);
-        totalCredit = movements.Where(m => MovementTypes.IsIncome(m.MovementType)).Sum(m => m.Amount);
+        totalDebit = movements.Where(m => m.IsExpense).Sum(m => m.Amount);
+        totalCredit = movements.Where(m => m.IsIncome).Sum(m => m.Amount);
         transferCount = movements.Count(m => m.MovementType == MovementTypes.Transfer);
     }
 

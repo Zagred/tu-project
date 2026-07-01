@@ -3,57 +3,142 @@
 @inject AccountApiService AccountService
 @inject MovementApiService MovementService
 
-<PageTitle>Accounts</PageTitle>
+<PageTitle>Моите сметки — BankApp</PageTitle>
 
 @if (AuthService.CurrentUser == null)
 {
-    <section class="empty-state">
-        <h1>You are not logged in</h1>
-        <a class="btn btn-primary" href="/login">Go to login</a>
-    </section>
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+        <div class="ucb-card" style="text-align:center;padding:40px;max-width:360px;">
+            <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;">Не сте влезли в системата</p>
+            <a class="btn-ucb-primary" href="/login" style="text-decoration:none;display:block;">Към вход</a>
+        </div>
+    </div>
 }
 else
 {
-    <div class="page-heading">
-        <div>
-            <h1>My Accounts</h1>
-            <p class="text-muted">Welcome, @AuthService.CurrentUser.User.Username!</p>
-        </div>
-        <div class="actions">
-            <button class="btn btn-outline-secondary" type="button" @onclick="LoadDataAsync">Refresh</button>
-            <button class="btn btn-primary" type="button" @onclick="CreateAccountAsync">+ New</button>
+    <!-- BALANCE HERO -->
+    <div class="ucb-hero-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+            <div>
+                <p style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:6px;">Общ баланс по всички сметки</p>
+                <div style="font-size:36px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;">
+                    @totalBalance.ToString("F2") <span style="font-size:20px;font-weight:400;color:rgba(255,255,255,0.5);">лв</span>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+                    <a href="/transfers" style="display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;text-decoration:none;">
+                        Нов превод
+                    </a>
+                    <button @onclick="CreateAccountAsync"
+                            style="background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;cursor:pointer;">
+                        + Нова сметка
+                    </button>
+                    <button @onclick="LoadDataAsync"
+                            style="background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;cursor:pointer;">
+                        Обнови
+                    </button>
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;text-align:right;">
+                <div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.4);">Приходи</div>
+                    <div style="font-size:18px;font-weight:700;color:#4ADE80;">@totalCredit.ToString("F2") лв</div>
+                </div>
+                <div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.4);">Разходи</div>
+                    <div style="font-size:18px;font-weight:700;color:#F87171;">@totalDebit.ToString("F2") лв</div>
+                </div>
+            </div>
         </div>
     </div>
 
     @if (!string.IsNullOrEmpty(message))
     {
-        <p class="alert @messageClass">@message</p>
+        <div class="@(messageClass.Contains("danger") ? "ucb-alert-danger" : "ucb-alert-success")" style="margin-bottom:14px;">
+            @message
+        </div>
     }
 
-    <section class="metrics">
-        <div class="metric"><span>Balance</span><strong>@totalBalance.ToString("F2") BGN</strong></div>
-        <div class="metric"><span>Income</span><strong>@totalCredit.ToString("F2") BGN</strong></div>
-        <div class="metric"><span>Expense</span><strong>@totalDebit.ToString("F2") BGN</strong></div>
-        <div class="metric"><span>Accounts</span><strong>@accounts.Count</strong></div>
-    </section>
+    <!-- STAT CARDS -->
+    <div class="grid-3" style="margin-bottom:14px;">
+        <div class="ucb-card">
+            <div class="stat-icon navy">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="var(--navy)" stroke-width="1.6" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+            </div>
+            <div class="section-label">Баланс</div>
+            <div class="stat-value">@totalBalance.ToString("F2")</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">лв общо</div>
+        </div>
+        <div class="ucb-card">
+            <div class="stat-icon green">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="var(--green)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="7" y1="17" x2="17" y2="7" />
+                    <polyline points="7 7 17 7 17 17" />
+                </svg>
+            </div>
+            <div class="section-label">Приходи</div>
+            <div class="stat-value green">@totalCredit.ToString("F2")</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">лв този месец</div>
+        </div>
+        <div class="ucb-card">
+            <div class="stat-icon red">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="var(--red)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="7" y1="7" x2="17" y2="17" />
+                    <polyline points="17 7 17 17 7 17" />
+                </svg>
+            </div>
+            <div class="section-label">Разходи</div>
+            <div class="stat-value red">@totalDebit.ToString("F2")</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">лв този месец</div>
+        </div>
+    </div>
 
-    <section class="tool-panel">
-        <div class="table-toolbar">
-            <h2>Accounts</h2>
-            <a class="btn btn-outline-primary" href="/transfers">Transfer</a>
+    <!-- ACCOUNTS LIST -->
+    <div class="ucb-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div class="section-title">Всички сметки</div>
+            <button class="btn-ucb-navy" style="font-size:12px;padding:7px 14px;"
+                    @onclick="CreateAccountAsync">
+                + Нова
+            </button>
         </div>
 
-        <div class="item-list">
+        @if (accounts.Count == 0)
+        {
+            <p style="font-size:13px;color:var(--text-muted);text-align:center;padding:24px 0;">
+                Нямате банкови сметки. Създайте нова.
+            </p>
+        }
+        else
+        {
             @foreach (var account in accounts)
             {
-                <article class="item-card">
-                    <strong>@account.Iban</strong>
-                    <span>Balance: @account.Balance.ToString("F2") @account.Currency</span>
-                    <small>@account.Role</small>
-                </article>
+                <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#F8F9FC;border:0.5px solid var(--border);border-radius:8px;margin-bottom:8px;">
+                    <div style="width:36px;height:36px;border-radius:8px;background:#EEF2FA;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                             stroke="var(--navy)" stroke-width="1.4" stroke-linecap="round">
+                            <rect x="1" y="4" width="22" height="16" rx="2" />
+                            <line x1="1" y1="10" x2="23" y2="10" />
+                        </svg>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;font-weight:700;color:var(--text-primary);font-family:monospace;">@account.Iban</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">@account.Currency · @account.Role</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:15px;font-weight:700;color:var(--green);">@account.Balance.ToString("F2")</div>
+                        <div style="font-size:10px;color:var(--text-muted);">лв</div>
+                    </div>
+                </div>
             }
-        </div>
-    </section>
+        }
+    </div>
 }
 
 @code {
@@ -67,7 +152,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         await AuthService.InitializeAsync();
-
         if (AuthService.CurrentUser != null)
             await LoadDataAsync();
     }
@@ -77,10 +161,9 @@ else
         message = "";
         accounts = await AccountService.GetMyAccountsAsync();
         var movements = await MovementService.GetMyMovementsAsync();
-
         totalBalance = accounts.Sum(a => a.Balance);
-        totalCredit = movements.Where(m => MovementTypes.IsIncome(m.MovementType)).Sum(m => m.Amount);
-        totalDebit = movements.Where(m => MovementTypes.IsExpense(m.MovementType)).Sum(m => m.Amount);
+        totalCredit = movements.Where(m => m.IsIncome).Sum(m => m.Amount);
+        totalDebit = movements.Where(m => m.IsExpense).Sum(m => m.Amount);
     }
 
     private async Task CreateAccountAsync()
@@ -88,12 +171,11 @@ else
         var account = await AccountService.CreateAccountAsync();
         if (account == null)
         {
-            message = "Failed to create account.";
+            message = "Грешка при създаване на сметка.";
             messageClass = "alert-danger";
             return;
         }
-
-        message = $"Account created: {account.Iban}";
+        message = $"Сметката е създадена: {account.Iban}";
         messageClass = "alert-success";
         await LoadDataAsync();
     }

@@ -12,10 +12,20 @@ namespace BankAPP.Services
             _httpClient = factory.CreateClient("BankApi");
         }
 
-        public async Task<bool> TransferAsync(TransferRequest request)
+        public async Task<(bool Success, string? ErrorMessage)> TransferAsync(TransferRequest request)
         {
-            var response = await _httpClient.PostAsJsonAsync("api/transfers", request);
-            return response.IsSuccessStatusCode;
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/transfers", request);
+                if (response.IsSuccessStatusCode)
+                    return (true, null);
+
+                return (false, await response.Content.ReadAsStringAsync());
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
         }
     }
 }

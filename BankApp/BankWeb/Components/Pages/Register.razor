@@ -2,49 +2,111 @@
 @inject ApiAuthService AuthService
 @inject NavigationManager Navigation
 
-<PageTitle>Register</PageTitle>
+<PageTitle>Регистрация — BankApp</PageTitle>
 
-<section class="auth-panel">
-    <h1>Create account</h1>
+<div class="login-shell">
 
-    <div class="form-grid two">
-        <label>
-            Name
-            <input class="form-control" @bind="request.Name" />
-        </label>
-        <label>
-            Username
-            <input class="form-control" @bind="request.Username" />
-        </label>
-        <label>
-            Email
-            <input class="form-control" type="email" @bind="request.Email" />
-        </label>
-        <label>
-            EGN
-            <input class="form-control" @bind="request.Egn" />
-        </label>
-        <label>
-            Password
-            <input class="form-control" type="password" @bind="request.Password" />
-        </label>
+    <!-- Лява колона -->
+    <div class="login-hero">
+        <div class="login-hero-deco deco-1"></div>
+        <div class="login-hero-deco deco-2"></div>
+
+        <div class="login-logo">
+            <div class="login-logo-mark">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                     stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11.5 1L2 6v2h19V6z" />
+                    <line x1="16" y1="10" x2="16" y2="17" />
+                    <line x1="12" y1="10" x2="12" y2="17" />
+                    <line x1="8" y1="10" x2="8" y2="17" />
+                    <line x1="2" y1="19" x2="22" y2="19" />
+                    <line x1="2" y1="22" x2="22" y2="22" />
+                </svg>
+            </div>
+            <div>
+                <div class="login-logo-name">BankApp</div>
+                <div class="login-logo-sub">ДИГИТАЛНО БАНКИРАНЕ</div>
+            </div>
+        </div>
+
+        <h1 class="login-headline">Създайте акаунт<br />за минути.</h1>
+        <p class="login-subtext">Попълнете формата и получете достъп до всички функции на BankApp веднага.</p>
+
+        <ul class="login-features">
+            <li><span class="feat-dot"></span>Бърза и лесна регистрация</li>
+            <li><span class="feat-dot"></span>Сигурно съхранение на данните</li>
+            <li><span class="feat-dot"></span>Незабавен достъп след регистрация</li>
+        </ul>
     </div>
 
-    <div class="actions">
-        <button class="btn btn-primary" type="button" @onclick="RegisterAsync">Create</button>
-        <a class="btn btn-outline-secondary" href="/login">Back to login</a>
+    <!-- Дясна колона -->
+    <div class="login-form-panel">
+        <h2 class="login-form-title">Нов акаунт</h2>
+        <p class="login-form-sub">Попълнете всички полета, за да продължите</p>
+
+        <div class="form-group">
+            <label class="field-label">ПЪЛНО ИМЕ</label>
+            <input class="ucb-input" placeholder="Въведете пълното си име" @bind="request.Name" />
+        </div>
+
+        <div class="form-group">
+            <label class="field-label">ПОТРЕБИТЕЛСКО ИМЕ</label>
+            <input class="ucb-input" placeholder="Изберете потребителско име" @bind="request.Username" />
+        </div>
+
+        <div class="form-group">
+            <label class="field-label">ИМЕЙЛ АДРЕС</label>
+            <input class="ucb-input" type="email" placeholder="example@email.com" @bind="request.Email" />
+        </div>
+
+        <div class="form-group">
+            <label class="field-label">ЕГН</label>
+            <input class="ucb-input" placeholder="10 цифри" maxlength="10" @bind="request.Egn" />
+        </div>
+
+        <div class="form-group">
+            <label class="field-label">ПАРОЛА</label>
+            <input class="ucb-input" type="password" placeholder="Минимум 6 символа" @bind="request.Password" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="@(messageClass.Contains("danger") ? "ucb-alert-danger" : "ucb-alert-success")">
+                @message
+            </div>
+        }
+
+        <button class="btn-ucb-primary" @onclick="RegisterAsync" disabled="@isLoading">
+            @if (isLoading)
+            {
+                <span class="btn-spinner"></span>
+                <span>Създаване...</span>
+            }
+            else
+            {
+                <span>Създай акаунт</span>
+            }
+        </button>
+
+        <div class="ucb-divider"><span>или</span></div>
+
+        <a class="btn-ucb-outline" href="/login">Назад към вход</a>
+
+        <div class="ucb-security-note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#15803d">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+            </svg>
+            Данните ви са защитени и криптирани
+        </div>
     </div>
 
-    @if (!string.IsNullOrEmpty(message))
-    {
-        <p class="alert @messageClass">@message</p>
-    }
-</section>
+</div>
 
 @code {
     private RegisterRequest request = new();
     private string message = "";
     private string messageClass = "alert-danger";
+    private bool isLoading = false;
 
     private async Task RegisterAsync()
     {
@@ -56,20 +118,25 @@
             string.IsNullOrWhiteSpace(request.Egn) ||
             string.IsNullOrWhiteSpace(request.Password))
         {
-            message = "Please fill all fields.";
+            message = "Моля попълнете всички полета.";
             messageClass = "alert-danger";
             return;
         }
+
+        isLoading = true;
+        StateHasChanged();
 
         var success = await AuthService.RegisterAsync(request);
+        isLoading = false;
+
         if (!success)
         {
-            message = "Could not create account. Username, email or EGN may already exist.";
+            message = "Неуспешна регистрация. Потребителското име, имейлът или ЕГН-то може вече да съществуват.";
             messageClass = "alert-danger";
             return;
         }
 
-        message = "Account created successfully.";
+        message = "Акаунтът е създаден успешно.";
         messageClass = "alert-success";
         Navigation.NavigateTo("/login");
     }

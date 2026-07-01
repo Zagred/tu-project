@@ -2,78 +2,483 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="BankAPP.AdminPage"
-             Title="Admin">
-    <ScrollView>
-        <VerticalStackLayout Padding="16" Spacing="16">
-            <Label Text="Admin Dashboard" FontAttributes="Bold" FontSize="24" />
+             Title="Admin"
+             BackgroundColor="{StaticResource PageBg}">
 
-            <Frame BorderColor="#cccccc" CornerRadius="12" Padding="12">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="All bank accounts" FontAttributes="Bold" />
-                    <CollectionView x:Name="AccountsCollection" SelectionMode="None">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <Frame BorderColor="#888" CornerRadius="10" Padding="10" Margin="0,4">
-                                    <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding OwnerName}" FontAttributes="Bold" />
-                                        <Label Text="{Binding Username}" FontSize="Small" TextColor="#555" />
-                                        <Label Text="IBAN: {Binding Iban}" FontSize="Small" />
-                                        <Label Text="Balance: {Binding Balance, StringFormat='{}{0:C2}'}" FontSize="Small" />
-                                        <Label Text="Status: {Binding Status}" FontSize="Small" />
-                                        <Label Text="Role: {Binding Role}" FontSize="Small" />
+    <Grid RowDefinitions="52,*" ColumnDefinitions="220,*">
+
+        <!-- SIDEBAR -->
+        <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
+              BackgroundColor="{StaticResource NavyDeep}"
+              RowDefinitions="Auto,*,Auto">
+            <HorizontalStackLayout Grid.Row="0" Spacing="10" Padding="20,22,20,20">
+                <Border BackgroundColor="{StaticResource BrandRed}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                        WidthRequest="34" HeightRequest="34" Padding="0">
+                    <Path Data="M11.5 1L2 6v2h19V6M16 10v7M12 10v7M8 10v7M2 19h19M2 22h19"
+                          Stroke="White" StrokeThickness="1.6" StrokeLineCap="Round" StrokeLineJoin="Round"
+                          WidthRequest="18" HeightRequest="18" Aspect="Uniform"
+                          HorizontalOptions="Center" VerticalOptions="Center"/>
+                </Border>
+                <VerticalStackLayout Spacing="1" VerticalOptions="Center">
+                    <Label Text="BankApp" FontSize="15" FontAttributes="Bold" TextColor="White"/>
+                    <Label Text="ДИГИТАЛНО БАНКИРАНЕ" FontSize="8" CharacterSpacing="0.6" TextColor="#55FFFFFF"/>
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+            <VerticalStackLayout Grid.Row="1" Padding="10,16" Spacing="2">
+                <Label Text="ГЛАВНО МЕНЮ" FontSize="9" CharacterSpacing="0.8"
+                       TextColor="#44FFFFFF" Margin="10,0,0,8" TextTransform="Uppercase"/>
+                <Button Text="Сметки" BackgroundColor="Transparent" TextColor="#77FFFFFF"
+                        BorderWidth="0" CornerRadius="7" FontSize="13" HeightRequest="42"
+                        HorizontalOptions="Fill" Padding="10,0" Clicked="OnNavigateToAccounts"/>
+                <Button Text="Преводи" BackgroundColor="Transparent" TextColor="#77FFFFFF"
+                        BorderWidth="0" CornerRadius="7" FontSize="13" HeightRequest="42"
+                        HorizontalOptions="Fill" Padding="10,0" Clicked="OnNavigateToTransfers"/>
+                <Button Text="Плащания" BackgroundColor="Transparent" TextColor="#77FFFFFF"
+                        BorderWidth="0" CornerRadius="7" FontSize="13" HeightRequest="42"
+                        HorizontalOptions="Fill" Padding="10,0" Clicked="OnNavigateToPayments"/>
+                <Label Text="АДМИНИСТРАЦИЯ" FontSize="9" CharacterSpacing="0.8"
+                       TextColor="#44FFFFFF" Margin="10,14,0,6" TextTransform="Uppercase"/>
+                <Border BackgroundColor="{StaticResource BrandRed}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 7" Padding="10,9">
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="Адм. панел" FontSize="13" TextColor="White" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+            <VerticalStackLayout Grid.Row="2" Padding="10,14">
+                <BoxView HeightRequest="0.5" Color="#33FFFFFF" Margin="0,0,0,12"/>
+                <HorizontalStackLayout Spacing="10" Padding="10,0">
+                    <Border BackgroundColor="{StaticResource BrandRed}"
+                            StrokeThickness="0" StrokeShape="RoundRectangle 16"
+                            WidthRequest="32" HeightRequest="32">
+                        <Label Text="A" FontSize="13" FontAttributes="Bold" TextColor="White"
+                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                    <VerticalStackLayout Spacing="1" VerticalOptions="Center">
+                        <Label Text="admin" FontSize="12" FontAttributes="Bold" TextColor="#CCFFFFff"/>
+                        <Label Text="Администратор" FontSize="10" TextColor="#55FFFFFF"/>
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- TOPBAR -->
+        <Grid Grid.Row="0" Grid.Column="1" BackgroundColor="White"
+              ColumnDefinitions="*,Auto,Auto" Padding="24,0" ColumnSpacing="10">
+            <HorizontalStackLayout Grid.Column="0" Spacing="10" VerticalOptions="Center">
+                <Label Text="Административен панел" FontSize="16" FontAttributes="Bold"
+                       TextColor="{StaticResource TextPrimary}"/>
+                <Border BackgroundColor="#FFF0F0" StrokeThickness="1" Stroke="#FECACA"
+                        StrokeShape="RoundRectangle 6" Padding="8,3">
+                    <Label Text="ADMIN" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource BrandRed}"/>
+                </Border>
+            </HorizontalStackLayout>
+            <Border Grid.Column="1" BackgroundColor="#F3F4F6"
+                    StrokeThickness="0.5" Stroke="{StaticResource BorderColor}"
+                    StrokeShape="RoundRectangle 6" Padding="12,5">
+                <Label Text="17 май 2026" FontSize="11"
+                       TextColor="{StaticResource TextMuted}" VerticalOptions="Center"/>
+            </Border>
+            <Button Grid.Column="2" Text="Изход" BackgroundColor="Transparent"
+                    TextColor="{StaticResource TextMuted}" BorderColor="{StaticResource BorderColor}"
+                    BorderWidth="1" CornerRadius="7" FontSize="12" FontAttributes="Bold"
+                    HeightRequest="34" Padding="14,0" Clicked="OnLogoutClicked"/>
+        </Grid>
+
+        <!-- MAIN CONTENT -->
+        <ScrollView Grid.Row="1" Grid.Column="1">
+            <VerticalStackLayout Padding="24" Spacing="14">
+
+                <!-- STAT CARDS -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                    <Border Grid.Column="0" Style="{StaticResource Card}" Padding="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Border BackgroundColor="#EEF2FA" StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 8" WidthRequest="32" HeightRequest="32"
+                                    HorizontalOptions="Start">
+                                <Path Data="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+                                      Fill="{StaticResource Navy}" WidthRequest="18" HeightRequest="18"
+                                      Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <Label Text="ПОТРЕБИТЕЛИ" FontSize="10" FontAttributes="Bold"
+                                   TextColor="{StaticResource TextMuted}" CharacterSpacing="0.4"/>
+                            <Label x:Name="UserCountLabel" Text="—" FontSize="22" FontAttributes="Bold"
+                                   TextColor="{StaticResource TextPrimary}"/>
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource Card}" Padding="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Border BackgroundColor="{StaticResource SuccessGreenBg}" StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 8" WidthRequest="32" HeightRequest="32"
+                                    HorizontalOptions="Start">
+                                <Path Data="M21 4 L3 4 L3 20 L21 20 Z M3 10 L21 10"
+                                      Stroke="{StaticResource SuccessGreen}" StrokeThickness="1.4"
+                                      StrokeLineCap="Round" WidthRequest="18" HeightRequest="18"
+                                      Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <Label Text="БАНКОВИ СМЕТКИ" FontSize="10" FontAttributes="Bold"
+                                   TextColor="{StaticResource TextMuted}" CharacterSpacing="0.4"/>
+                            <Label x:Name="AccountCountLabel" Text="—" FontSize="22" FontAttributes="Bold"
+                                   TextColor="{StaticResource SuccessGreen}"/>
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource Card}" Padding="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Border BackgroundColor="{StaticResource WarningAmberBg}" StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 8" WidthRequest="32" HeightRequest="32"
+                                    HorizontalOptions="Start">
+                                <Path Data="M12 2 L12 14 M12 18 L12 22"
+                                      Stroke="{StaticResource WarningAmber}" StrokeThickness="2"
+                                      StrokeLineCap="Round" WidthRequest="18" HeightRequest="18"
+                                      Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <Label Text="ЧАКАЩИ ОДОБРЕНИЕ" FontSize="10" FontAttributes="Bold"
+                                   TextColor="{StaticResource TextMuted}" CharacterSpacing="0.4"/>
+                            <Label x:Name="PendingCountLabel" Text="—" FontSize="22" FontAttributes="Bold"
+                                   TextColor="{StaticResource WarningAmber}"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+
+                    <!-- LEFT: Accounts + Pending -->
+                    <VerticalStackLayout Grid.Column="0" Spacing="14">
+
+                        <!-- All accounts -->
+                        <Border Style="{StaticResource Card}">
+                            <VerticalStackLayout Spacing="12">
+                                <Label Text="Всички банкови сметки" Style="{StaticResource SectionTitle}"/>
+                                <CollectionView x:Name="AccountsCollection" SelectionMode="None">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,8" BackgroundColor="#F8F9FC"
+                                                    StrokeThickness="0.5" Stroke="{StaticResource BorderColor}"
+                                                    StrokeShape="RoundRectangle 8" Padding="14,12">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                    <Border Grid.Column="0" BackgroundColor="#EEF2FA"
+                                                            StrokeThickness="0" StrokeShape="RoundRectangle 18"
+                                                            WidthRequest="36" HeightRequest="36">
+                                                        <Label Text="{Binding OwnerName[0]}"
+                                                               FontSize="14" FontAttributes="Bold"
+                                                               TextColor="{StaticResource Navy}"
+                                                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                                                    </Border>
+                                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                                        <Label Text="{Binding OwnerName}" FontSize="13"
+                                                               FontAttributes="Bold" TextColor="{StaticResource TextPrimary}"/>
+                                                        <Label Text="{Binding Iban}" FontSize="10"
+                                                               TextColor="{StaticResource TextMuted}" FontFamily="OpenSansRegular"/>
+                                                    </VerticalStackLayout>
+                                                    <VerticalStackLayout Grid.Column="2" HorizontalOptions="End" Spacing="2">
+                                                        <Label Text="{Binding Balance, StringFormat='{0:F2}'}"
+                                                               FontSize="14" FontAttributes="Bold"
+                                                               TextColor="{StaticResource SuccessGreen}"
+                                                               HorizontalOptions="End"/>
+                                                        <Label Text="{Binding Currency}" FontSize="10"
+                                                               TextColor="{StaticResource TextMuted}"
+                                                               HorizontalOptions="End"/>
+                                                    </VerticalStackLayout>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Pending transfers -->
+                        <Border Style="{StaticResource Card}">
+                            <VerticalStackLayout Spacing="12">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Grid.Column="0" Text="Чакащи одобрение"
+                                           Style="{StaticResource SectionTitle}"/>
+                                    <Border Grid.Column="1" BackgroundColor="{StaticResource WarningAmberBg}"
+                                            StrokeThickness="0.5" Stroke="{StaticResource WarningAmber}"
+                                            StrokeShape="RoundRectangle 20" Padding="8,3">
+                                        <Label x:Name="PendingBadgeLabel" Text="0"
+                                               FontSize="11" FontAttributes="Bold"
+                                               TextColor="{StaticResource WarningAmber}"/>
+                                    </Border>
+                                </Grid>
+                                <CollectionView x:Name="PendingTransfersCollection" SelectionMode="None">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,8" BackgroundColor="#FFFBEB"
+                                                    StrokeThickness="0.5" Stroke="{StaticResource WarningAmber}"
+                                                    StrokeShape="RoundRectangle 8" Padding="14,12">
+                                                <VerticalStackLayout Spacing="6">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                                            <Label Text="{Binding Description}" FontSize="13"
+                                                                   FontAttributes="Bold" TextColor="{StaticResource TextPrimary}"/>
+                                                            <Label Text="{Binding FromAccount, StringFormat='От: {0}'}"
+                                                                   FontSize="11" TextColor="{StaticResource TextMuted}"/>
+                                                            <Label Text="{Binding MovementDateTime, StringFormat='{0:dd.MM.yyyy HH:mm}'}"
+                                                                   FontSize="10" TextColor="{StaticResource TextMuted}"/>
+                                                        </VerticalStackLayout>
+                                                        <Label Grid.Column="1"
+                                                               Text="{Binding Amount, StringFormat='{0:F2} лв'}"
+                                                               FontSize="15" FontAttributes="Bold"
+                                                               TextColor="{StaticResource WarningAmber}"
+                                                               VerticalOptions="Center"/>
+                                                    </Grid>
+                                                    <HorizontalStackLayout Spacing="8">
+                                                        <Button Text="Одобри"
+                                                                BackgroundColor="#DCFCE7"
+                                                                TextColor="{StaticResource SuccessGreen}"
+                                                                BorderWidth="0" CornerRadius="6"
+                                                                FontSize="12" FontAttributes="Bold"
+                                                                Padding="12,6"
+                                                                Clicked="OnApproveTransferClicked"
+                                                                CommandParameter="{Binding MovementId}"/>
+                                                        <Button Text="Откажи"
+                                                                BackgroundColor="{StaticResource BrandRedLight}"
+                                                                TextColor="{StaticResource BrandRed}"
+                                                                BorderWidth="0" CornerRadius="6"
+                                                                FontSize="12" FontAttributes="Bold"
+                                                                Padding="12,6"
+                                                                Clicked="OnRejectTransferClicked"
+                                                                CommandParameter="{Binding MovementId}"/>
+                                                    </HorizontalStackLayout>
+                                                </VerticalStackLayout>
+                                            </Border>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+                        </Border>
+
+                    </VerticalStackLayout>
+
+                    <!-- RIGHT: Create card + POS -->
+                    <VerticalStackLayout Grid.Column="1" Spacing="14">
+
+                        <!-- Create Card -->
+                        <Border Style="{StaticResource Card}">
+                            <VerticalStackLayout Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0" BackgroundColor="{StaticResource Navy}"
+                                            StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                                            WidthRequest="32" HeightRequest="32">
+                                        <Path Data="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                                              Stroke="White" StrokeThickness="1.4" StrokeLineCap="Round" StrokeLineJoin="Round"
+                                              WidthRequest="16" HeightRequest="16" Aspect="Uniform"
+                                              HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                    <Label Grid.Column="1" Text="Издай карта"
+                                           FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           VerticalOptions="Center" Margin="10,0,0,0"/>
+                                </Grid>
+
+                                <Label Text="ПОТРЕБИТЕЛ" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}" HeightRequest="46">
+                                    <Picker x:Name="UserPicker" Title="Избери потребител"
+                                            BackgroundColor="Transparent" FontSize="13"
+                                            VerticalOptions="Center"
+                                            SelectedIndexChanged="OnUserChanged"/>
+                                </Border>
+
+                                <Label Text="БАНКОВА СМЕТКА" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}" HeightRequest="46">
+                                    <Picker x:Name="AccountPicker" Title="Избери сметка"
+                                            ItemDisplayBinding="{Binding DisplayText}"
+                                            BackgroundColor="Transparent" FontSize="13"
+                                            VerticalOptions="Center"
+                                            SelectedIndexChanged="OnAccountChanged"/>
+                                </Border>
+
+                                <Label x:Name="SelectedAccountBalanceLabel"
+                                       Text="Баланс: —"
+                                       FontSize="12" TextColor="{StaticResource SuccessGreen}"
+                                       FontAttributes="Bold"/>
+
+                                <Button Text="Издай карта за сметката"
+                                        Style="{StaticResource NavyBtn}"
+                                        Clicked="OnOpenCreateCardWindowClicked"/>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Add Funds -->
+                        <Border Style="{StaticResource Card}">
+                            <VerticalStackLayout Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0" BackgroundColor="{StaticResource SuccessGreen}"
+                                            StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                                            WidthRequest="32" HeightRequest="32">
+                                        <Path Data="M12 5v14M5 12h14"
+                                              Stroke="White" StrokeThickness="1.8"
+                                              StrokeLineCap="Round" StrokeLineJoin="Round"
+                                              WidthRequest="16" HeightRequest="16" Aspect="Uniform"
+                                              HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                    <Label Grid.Column="1" Text="Add money to user"
+                                           FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           VerticalOptions="Center" Margin="10,0,0,0"/>
+                                </Grid>
+
+                                <Label Text="AMOUNT (BGN)" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}">
+                                    <Entry x:Name="AddFundsAmountEntry"
+                                           Placeholder="0,00"
+                                           PlaceholderColor="{StaticResource TextMuted}"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           Keyboard="Numeric" FontSize="14"
+                                           BackgroundColor="Transparent" VerticalOptions="Center"/>
+                                </Border>
+
+                                <Label Text="DESCRIPTION" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}">
+                                    <Entry x:Name="AddFundsDescriptionEntry"
+                                           Placeholder="Admin deposit"
+                                           PlaceholderColor="{StaticResource TextMuted}"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           FontSize="14"
+                                           BackgroundColor="Transparent" VerticalOptions="Center"/>
+                                </Border>
+
+                                <Button Text="Add money to selected account"
+                                        Style="{StaticResource NavyBtn}"
+                                        Clicked="OnAddFundsClicked"/>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Transfer Between Accounts -->
+                        <Border Style="{StaticResource Card}">
+                            <VerticalStackLayout Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0" BackgroundColor="{StaticResource Navy}"
+                                            StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                                            WidthRequest="32" HeightRequest="32">
+                                        <Path Data="M12 4 L12 20 M4 12 L12 4 L20 12 M20 4 L20 20"
+                                              Stroke="White" StrokeThickness="1.6"
+                                              StrokeLineCap="Round" StrokeLineJoin="Round"
+                                              WidthRequest="16" HeightRequest="16" Aspect="Uniform"
+                                              HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                    <Label Grid.Column="1" Text="Transfer between accounts"
+                                           FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           VerticalOptions="Center" Margin="10,0,0,0"/>
+                                </Grid>
+
+                                <Label Text="FROM ACCOUNT" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}" HeightRequest="46">
+                                    <Picker x:Name="TransferFromAccountPicker"
+                                            Title="Select source account"
+                                            ItemDisplayBinding="{Binding DisplayText}"
+                                            BackgroundColor="Transparent" FontSize="13"
+                                            VerticalOptions="Center"/>
+                                </Border>
+
+                                <Label Text="TO ACCOUNT" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}" HeightRequest="46">
+                                    <Picker x:Name="TransferToAccountPicker"
+                                            Title="Select destination account"
+                                            ItemDisplayBinding="{Binding DisplayText}"
+                                            BackgroundColor="Transparent" FontSize="13"
+                                            VerticalOptions="Center"/>
+                                </Border>
+
+                                <Label Text="AMOUNT (BGN)" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}">
+                                    <Entry x:Name="AdminTransferAmountEntry"
+                                           Placeholder="0,00"
+                                           PlaceholderColor="{StaticResource TextMuted}"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           Keyboard="Numeric" FontSize="14"
+                                           BackgroundColor="Transparent" VerticalOptions="Center"/>
+                                </Border>
+
+                                <Label Text="DESCRIPTION" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}">
+                                    <Entry x:Name="AdminTransferDescriptionEntry"
+                                           Placeholder="Admin account transfer"
+                                           PlaceholderColor="{StaticResource TextMuted}"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           FontSize="14"
+                                           BackgroundColor="Transparent" VerticalOptions="Center"/>
+                                </Border>
+
+                                <Button Text="Transfer money"
+                                        Style="{StaticResource NavyBtn}"
+                                        Clicked="OnAdminTransferClicked"/>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- POS Transaction -->
+                        <Border Style="{StaticResource Card}">
+                            <VerticalStackLayout Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0" BackgroundColor="{StaticResource BrandRed}"
+                                            StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                                            WidthRequest="32" HeightRequest="32">
+                                        <Path Data="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM1 5h22"
+                                              Stroke="White" StrokeThickness="1.4" StrokeLineCap="Round" StrokeLineJoin="Round"
+                                              WidthRequest="16" HeightRequest="16" Aspect="Uniform"
+                                              HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Border>
+                                    <Label Grid.Column="1" Text="Създай POS транзакция"
+                                           FontSize="14" FontAttributes="Bold"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           VerticalOptions="Center" Margin="10,0,0,0"/>
+                                </Grid>
+
+                                <Label Text="КАРТА" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}" HeightRequest="46">
+                                    <Picker x:Name="CardPicker" Title="Избери карта"
+                                            ItemDisplayBinding="{Binding DisplayText}"
+                                            BackgroundColor="Transparent" FontSize="13"
+                                            VerticalOptions="Center"/>
+                                </Border>
+
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                    <VerticalStackLayout Grid.Column="0">
+                                        <Label Text="ТЪРГОВЕЦ" Style="{StaticResource FieldLabel}"/>
+                                        <Border Style="{StaticResource InputBorder}" HeightRequest="46">
+                                            <Picker x:Name="MerchantPicker" Title="Избери търговец"
+                                                    ItemDisplayBinding="{Binding MerchantName}"
+                                                    BackgroundColor="Transparent" FontSize="13"
+                                                    VerticalOptions="Center"
+                                                    SelectedIndexChanged="OnMerchantChanged"/>
+                                        </Border>
                                     </VerticalStackLayout>
-                                </Frame>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </VerticalStackLayout>
-            </Frame>
-
-            <Frame BorderColor="#cccccc" CornerRadius="12" Padding="12">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Select user and account" FontAttributes="Bold" />
-                    <Picker x:Name="UserPicker" Title="Select user" SelectedIndexChanged="OnUserChanged" />
-                    <Picker x:Name="AccountPicker" Title="Select account" ItemDisplayBinding="{Binding DisplayText}" SelectedIndexChanged="OnAccountChanged" />
-                    <Label x:Name="SelectedAccountBalanceLabel" Text="Balance:" FontSize="Small" TextColor="#333" />
-                    <Button Text="Create card for this account" Clicked="OnOpenCreateCardWindowClicked" />
-                </VerticalStackLayout>
-            </Frame>
-
-            <Frame BorderColor="#cccccc" CornerRadius="12" Padding="12">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Create POS transaction" FontAttributes="Bold" />
-                    <Picker x:Name="CardPicker" Title="Select card" ItemDisplayBinding="{Binding DisplayText}" />
-                    <Picker x:Name="MerchantPicker" Title="Select merchant" ItemDisplayBinding="{Binding MerchantName}" SelectedIndexChanged="OnMerchantChanged" />
-                    <Picker x:Name="LocationPicker" Title="Select location" ItemDisplayBinding="{Binding DisplayText}" />
-                    <Entry x:Name="AmountEntry" Keyboard="Numeric" Placeholder="Amount" />
-                    <Button Text="Create POS payment" Clicked="OnCreatePosPaymentClicked" />
-                    <Label x:Name="StatusLabel" TextColor="#007700" />
-                </VerticalStackLayout>
-            </Frame>
-
-            <Frame BorderColor="#cccccc" CornerRadius="12" Padding="12">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="Pending transfer approvals" FontAttributes="Bold" />
-                    <CollectionView x:Name="PendingTransfersCollection" SelectionMode="None">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <Frame BorderColor="#ff9800" CornerRadius="10" Padding="10" Margin="0,4">
-                                    <VerticalStackLayout Spacing="6">
-                                        <Label Text="{Binding Description}" FontAttributes="Bold" FontSize="Small" />
-                                        <Label Text="{Binding FromAccount, StringFormat='From: {0}'}" FontSize="12" />
-                                        <Label Text="{Binding Amount, StringFormat='{}{0:F2}'}" FontSize="12" />
-                                        <Label Text="{Binding MovementDateTime, StringFormat='{0:g}'}" FontSize="10" TextColor="#666" />
-                                        <HorizontalStackLayout Spacing="8">
-                                            <Button Text="Approve" Padding="8" FontSize="12" Clicked="OnApproveTransferClicked" CommandParameter="{Binding MovementId}" />
-                                            <Button Text="Reject" Padding="8" FontSize="12" BackgroundColor="#ff5252" Clicked="OnRejectTransferClicked" CommandParameter="{Binding MovementId}" />
-                                        </HorizontalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1">
+                                        <Label Text="ЛОКАЦИЯ" Style="{StaticResource FieldLabel}"/>
+                                        <Border Style="{StaticResource InputBorder}" HeightRequest="46">
+                                            <Picker x:Name="LocationPicker" Title="Избери локация"
+                                                    ItemDisplayBinding="{Binding DisplayText}"
+                                                    BackgroundColor="Transparent" FontSize="13"
+                                                    VerticalOptions="Center"/>
+                                        </Border>
                                     </VerticalStackLayout>
-                                </Frame>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </VerticalStackLayout>
-            </Frame>
-        </VerticalStackLayout>
-    </ScrollView>
+                                </Grid>
+
+                                <Label Text="СУМА (BGN)" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}">
+                                    <Entry x:Name="AmountEntry" Placeholder="0,00"
+                                           PlaceholderColor="{StaticResource TextMuted}"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           Keyboard="Numeric" FontSize="14"
+                                           BackgroundColor="Transparent" VerticalOptions="Center"/>
+                                </Border>
+
+                                <Button Text="Създай POS плащане"
+                                        Style="{StaticResource PrimaryBtn}"
+                                        Clicked="OnCreatePosPaymentClicked"/>
+
+                                <Label x:Name="StatusLabel" FontSize="12" Margin="0,4,0,0"/>
+                            </VerticalStackLayout>
+                        </Border>
+
+                    </VerticalStackLayout>
+                </Grid>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
 </ContentPage>

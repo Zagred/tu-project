@@ -1,4 +1,5 @@
 using BankShared.DTOs;
+using BankShared.Utilities;
 using System.Net.Http.Json;
 
 namespace BankAPP.Services
@@ -20,7 +21,11 @@ namespace BankAPP.Services
 
         public async Task<AccountDto?> GetAccountByIbanAsync(string iban)
         {
-            var response = await _httpClient.GetAsync($"api/accounts/by-iban/{iban}");
+            var normalizedIban = BankInputNormalizer.NormalizeIban(iban);
+            if (string.IsNullOrWhiteSpace(normalizedIban))
+                return null;
+
+            var response = await _httpClient.GetAsync($"api/accounts/by-iban/{Uri.EscapeDataString(normalizedIban)}");
             if (!response.IsSuccessStatusCode)
                 return null;
 

@@ -5,181 +5,248 @@
              Title="Login"
              BackgroundColor="{StaticResource PageBg}">
 
-    <Grid ColumnDefinitions="*,380" RowDefinitions="*">
+    <ContentPage.Content>
+        <OnIdiom x:TypeArguments="View">
 
-        <!-- ══════════════════════════════════
-             ЛЯВА КОЛОНА — Branding (Navy hero)
-        ══════════════════════════════════ -->
-        <Grid Grid.Column="0"
-              BackgroundColor="{StaticResource NavyDeep}"
-              Padding="52,48">
+            <!-- ══════════════════════════════════
+                 ДЕСКТОП layout
+            ══════════════════════════════════ -->
+            <OnIdiom.Desktop>
+                <Grid ColumnDefinitions="*,380" RowDefinitions="*">
 
-            <Ellipse Fill="#07FFFFFF"
-                     WidthRequest="300" HeightRequest="300"
-                     HorizontalOptions="End" VerticalOptions="End"
-                     Margin="0,0,-70,-70" />
-            <Ellipse Fill="#05FFFFFF"
-                     WidthRequest="200" HeightRequest="200"
-                     HorizontalOptions="Start" VerticalOptions="Start"
-                     Margin="-50,-50,0,0" />
+                    <Grid Grid.Column="0"
+                          BackgroundColor="{StaticResource NavyDeep}"
+                          Padding="52,48">
+                        <Ellipse Fill="#07FFFFFF"
+                                 WidthRequest="300" HeightRequest="300"
+                                 HorizontalOptions="End" VerticalOptions="End"
+                                 Margin="0,0,-70,-70" />
+                        <Ellipse Fill="#05FFFFFF"
+                                 WidthRequest="200" HeightRequest="200"
+                                 HorizontalOptions="Start" VerticalOptions="Start"
+                                 Margin="-50,-50,0,0" />
+                        <VerticalStackLayout VerticalOptions="Center" Spacing="0">
+                            <HorizontalStackLayout Spacing="12" Margin="0,0,0,52">
+                                <Border BackgroundColor="{StaticResource BrandRed}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 10"
+                                        WidthRequest="44" HeightRequest="44"
+                                        Padding="0">
+                                    <Path Data="M11.5 1L2 6v2h19V6M16 10v7M12 10v7M8 10v7M2 19h19M2 22h19"
+                                          Stroke="White" StrokeThickness="1.8"
+                                          StrokeLineCap="Round" StrokeLineJoin="Round"
+                                          WidthRequest="22" HeightRequest="22"
+                                          Aspect="Uniform"
+                                          HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                                    <Label Text="BankApp" FontSize="20" FontAttributes="Bold" TextColor="White"/>
+                                    <Label Text="ДИГИТАЛНО БАНКИРАНЕ" FontSize="9" CharacterSpacing="0.8" TextColor="#66FFFFFF"/>
+                                </VerticalStackLayout>
+                            </HorizontalStackLayout>
+                            <Label Text="Вашите финанси,&#10;на едно място."
+                                   FontSize="28" FontAttributes="Bold"
+                                   TextColor="White" LineHeight="1.35" Margin="0,0,0,16"/>
+                            <Label Text="Управлявайте сметките си, правете преводи и следете разходите си бързо и сигурно."
+                                   FontSize="13" TextColor="#77FFFFFF" LineHeight="1.65" Margin="0,0,0,40"/>
+                            <VerticalStackLayout Spacing="14">
+                                <HorizontalStackLayout Spacing="12">
+                                    <BoxView Color="{StaticResource BrandRed}" WidthRequest="6" HeightRequest="6" CornerRadius="3" VerticalOptions="Center"/>
+                                    <Label Text="Мигновени преводи между сметки" FontSize="12" TextColor="#77FFFFFF" VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+                                <HorizontalStackLayout Spacing="12">
+                                    <BoxView Color="{StaticResource BrandRed}" WidthRequest="6" HeightRequest="6" CornerRadius="3" VerticalOptions="Center"/>
+                                    <Label Text="Пълен преглед на плащания и история" FontSize="12" TextColor="#77FFFFFF" VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+                                <HorizontalStackLayout Spacing="12">
+                                    <BoxView Color="{StaticResource BrandRed}" WidthRequest="6" HeightRequest="6" CornerRadius="3" VerticalOptions="Center"/>
+                                    <Label Text="Защитено с 256-bit криптиране" FontSize="12" TextColor="#77FFFFFF" VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Grid>
 
-            <VerticalStackLayout VerticalOptions="Center" Spacing="0">
+                    <ScrollView Grid.Column="1" BackgroundColor="White">
+                        <VerticalStackLayout Padding="40,0" VerticalOptions="Center" Spacing="0">
+                            <Label Text="Добре дошли" FontSize="24" FontAttributes="Bold"
+                                   TextColor="{StaticResource TextPrimary}" Margin="0,52,0,4"/>
+                            <Label Text="Влезте в акаунта си, за да продължите"
+                                   FontSize="13" TextColor="{StaticResource TextMuted}" Margin="0,0,0,36"/>
+                            <Label Text="ПОТРЕБИТЕЛСКО ИМЕ" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}" Margin="0,0,0,16">
+                                <Entry x:Name="UsernameEntry"
+                                       Placeholder="Въведете потребителско име"
+                                       PlaceholderColor="{StaticResource TextMuted}"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       FontSize="14" BackgroundColor="Transparent"
+                                       ClearButtonVisibility="WhileEditing"
+                                       ReturnType="Next" VerticalOptions="Center"/>
+                            </Border>
+                            <Label Text="ПАРОЛА" Style="{StaticResource FieldLabel}"/>
+                            <Border Style="{StaticResource InputBorder}" Margin="0,0,0,10">
+                                <Entry x:Name="PasswordEntry"
+                                       Placeholder="Въведете парола"
+                                       PlaceholderColor="{StaticResource TextMuted}"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       IsPassword="True" FontSize="14"
+                                       BackgroundColor="Transparent"
+                                       ClearButtonVisibility="WhileEditing"
+                                       ReturnType="Done" VerticalOptions="Center"/>
+                            </Border>
+                            <Button Text="Вход в системата" Style="{StaticResource PrimaryBtn}"
+                                    Clicked="OnLoginClicked" Margin="0,20,0,0"/>
+                            <Grid ColumnDefinitions="*,Auto,*" Margin="0,22,0,18">
+                                <BoxView Grid.Column="0" Color="{StaticResource BorderColor}" HeightRequest="0.5" VerticalOptions="Center"/>
+                                <Label Grid.Column="1" Text="или" FontSize="11" TextColor="{StaticResource TextMuted}" Margin="14,0"/>
+                                <BoxView Grid.Column="2" Color="{StaticResource BorderColor}" HeightRequest="0.5" VerticalOptions="Center"/>
+                            </Grid>
+                            <Button Text="Създай нов акаунт" Style="{StaticResource OutlineBtn}" Clicked="OnGoToRegisterClicked"/>
+                            <Border BackgroundColor="#F8F9FC" StrokeThickness="0.5"
+                                    Stroke="{StaticResource BorderColor}"
+                                    StrokeShape="RoundRectangle 8"
+                                    Padding="14,11" Margin="0,24,0,52">
+                                <HorizontalStackLayout Spacing="9">
+                                    <Path Data="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"
+                                          Fill="{StaticResource SuccessGreen}"
+                                          WidthRequest="16" HeightRequest="16"
+                                          Aspect="Uniform" VerticalOptions="Center"/>
+                                    <Label Text="Връзката е криптирана и защитена"
+                                           FontSize="11" TextColor="{StaticResource TextMuted}" VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+                            </Border>
+                        </VerticalStackLayout>
+                    </ScrollView>
 
-                <HorizontalStackLayout Spacing="12" Margin="0,0,0,52">
-                    <Border BackgroundColor="{StaticResource BrandRed}"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 10"
-                            WidthRequest="44" HeightRequest="44"
-                            Padding="0">
-                        <Path Data="M11.5 1L2 6v2h19V6M16 10v7M12 10v7M8 10v7M2 19h19M2 22h19"
-                              Stroke="White"
-                              StrokeThickness="1.8"
-                              StrokeLineCap="Round"
-                              StrokeLineJoin="Round"
-                              WidthRequest="22" HeightRequest="22"
-                              Aspect="Uniform"
-                              HorizontalOptions="Center"
-                              VerticalOptions="Center"/>
-                    </Border>
-                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                        <Label Text="BankApp"
-                               FontSize="20" FontAttributes="Bold"
-                               TextColor="White"/>
-                        <Label Text="ДИГИТАЛНО БАНКИРАНЕ"
-                               FontSize="9" CharacterSpacing="0.8"
-                               TextColor="#66FFFFFF"/>
-                    </VerticalStackLayout>
-                </HorizontalStackLayout>
-
-                <Label Text="Вашите финанси,&#10;на едно място."
-                       FontSize="28" FontAttributes="Bold"
-                       TextColor="White" LineHeight="1.35"
-                       Margin="0,0,0,16"/>
-
-                <Label Text="Управлявайте сметките си, правете преводи и следете разходите си бързо и сигурно."
-                       FontSize="13" TextColor="#77FFFFFF"
-                       LineHeight="1.65" Margin="0,0,0,40"/>
-
-                <VerticalStackLayout Spacing="14">
-                    <HorizontalStackLayout Spacing="12">
-                        <BoxView Color="{StaticResource BrandRed}"
-                                 WidthRequest="6" HeightRequest="6"
-                                 CornerRadius="3" VerticalOptions="Center"/>
-                        <Label Text="Мигновени преводи между сметки"
-                               FontSize="12" TextColor="#77FFFFFF"
-                               VerticalOptions="Center"/>
-                    </HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="12">
-                        <BoxView Color="{StaticResource BrandRed}"
-                                 WidthRequest="6" HeightRequest="6"
-                                 CornerRadius="3" VerticalOptions="Center"/>
-                        <Label Text="Пълен преглед на плащания и история"
-                               FontSize="12" TextColor="#77FFFFFF"
-                               VerticalOptions="Center"/>
-                    </HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="12">
-                        <BoxView Color="{StaticResource BrandRed}"
-                                 WidthRequest="6" HeightRequest="6"
-                                 CornerRadius="3" VerticalOptions="Center"/>
-                        <Label Text="Защитено с 256-bit криптиране"
-                               FontSize="12" TextColor="#77FFFFFF"
-                               VerticalOptions="Center"/>
-                    </HorizontalStackLayout>
-                </VerticalStackLayout>
-
-            </VerticalStackLayout>
-        </Grid>
-
-        <!-- ══════════════════════════════════
-             ДЯСНА КОЛОНА — Login форма
-        ══════════════════════════════════ -->
-        <ScrollView Grid.Column="1" BackgroundColor="White">
-            <VerticalStackLayout Padding="40,0" VerticalOptions="Center" Spacing="0">
-
-                <Label Text="Добре дошли"
-                       FontSize="24" FontAttributes="Bold"
-                       TextColor="{StaticResource TextPrimary}"
-                       Margin="0,52,0,4"/>
-                <Label Text="Влезте в акаунта си, за да продължите"
-                       FontSize="13" TextColor="{StaticResource TextMuted}"
-                       Margin="0,0,0,36"/>
-
-                <Label Text="ПОТРЕБИТЕЛСКО ИМЕ"
-                       Style="{StaticResource FieldLabel}"/>
-                <Border Style="{StaticResource InputBorder}"
-                        Margin="0,0,0,16">
-                    <Entry x:Name="UsernameEntry"
-                           Placeholder="Въведете потребителско име"
-                           PlaceholderColor="{StaticResource TextMuted}"
-                           TextColor="{StaticResource TextPrimary}"
-                           FontSize="14"
-                           BackgroundColor="Transparent"
-                           ClearButtonVisibility="WhileEditing"
-                           ReturnType="Next"
-                           VerticalOptions="Center"/>
-                </Border>
-
-                <Label Text="ПАРОЛА"
-                       Style="{StaticResource FieldLabel}"/>
-                <Border Style="{StaticResource InputBorder}"
-                        Margin="0,0,0,10">
-                    <Entry x:Name="PasswordEntry"
-                           Placeholder="Въведете парола"
-                           PlaceholderColor="{StaticResource TextMuted}"
-                           TextColor="{StaticResource TextPrimary}"
-                           IsPassword="True"
-                           FontSize="14"
-                           BackgroundColor="Transparent"
-                           ClearButtonVisibility="WhileEditing"
-                           ReturnType="Done"
-                           VerticalOptions="Center"/>
-                </Border>
-
-                <Button Text="Вход в системата"
-                        Style="{StaticResource PrimaryBtn}"
-                        Clicked="OnLoginClicked"
-                        Margin="0,20,0,0"/>
-
-                <Grid ColumnDefinitions="*,Auto,*" Margin="0,22,0,18">
-                    <BoxView Grid.Column="0"
-                             Color="{StaticResource BorderColor}"
-                             HeightRequest="0.5"
-                             VerticalOptions="Center"/>
-                    <Label Grid.Column="1" Text="или"
-                           FontSize="11" TextColor="{StaticResource TextMuted}"
-                           Margin="14,0"/>
-                    <BoxView Grid.Column="2"
-                             Color="{StaticResource BorderColor}"
-                             HeightRequest="0.5"
-                             VerticalOptions="Center"/>
                 </Grid>
+            </OnIdiom.Desktop>
 
-                <Button Text="Създай нов акаунт"
-                        Style="{StaticResource OutlineBtn}"
-                        Clicked="OnGoToRegisterClicked"/>
+            <!-- ══════════════════════════════════
+                 МОБИЛЕН layout
+            ══════════════════════════════════ -->
+            <OnIdiom.Phone>
+                <ScrollView BackgroundColor="{StaticResource NavyDeep}">
+                    <Grid RowDefinitions="220,Auto">
 
-                <!-- Security note — замени целия Border най-долу -->
-                <Border BackgroundColor="#F8F9FC"
-                    StrokeThickness="0.5"
-                    Stroke="{StaticResource BorderColor}"
-                    StrokeShape="RoundRectangle 8"
-                    Padding="14,11"
-                    Margin="0,24,0,52">
-                    <HorizontalStackLayout Spacing="9">
-                        <Path Data="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"
-                              Fill="{StaticResource SuccessGreen}"
-                              WidthRequest="16" HeightRequest="16"
+                        <!-- Hero header — само лого центрирано -->
+                        <Grid Grid.Row="0"
+                  BackgroundColor="{StaticResource NavyDeep}"
+                  Padding="28,48,28,24">
+                            <Ellipse Fill="#08FFFFFF"
+                         WidthRequest="220" HeightRequest="220"
+                         HorizontalOptions="End" VerticalOptions="Start"
+                         Margin="0,-30,-30,0" />
+                            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
+                                <Border BackgroundColor="{StaticResource BrandRed}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 16"
+                            WidthRequest="64" HeightRequest="64"
+                            Padding="0"
+                            HorizontalOptions="Center">
+                                    <Path Data="M11.5 1L2 6v2h19V6M16 10v7M12 10v7M8 10v7M2 19h19M2 22h19"
+                              Stroke="White" StrokeThickness="1.8"
+                              StrokeLineCap="Round" StrokeLineJoin="Round"
+                              WidthRequest="30" HeightRequest="30"
                               Aspect="Uniform"
-                              VerticalOptions="Center"/>
-                        <Label Text="Връзката е криптирана и защитена"
-                           FontSize="11"
-                           TextColor="{StaticResource TextMuted}"
-                           VerticalOptions="Center"/>
-                    </HorizontalStackLayout>
-                </Border>
+                              HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                                <Label Text="BankApp"
+                           FontSize="22" FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                                <Label Text="ДИГИТАЛНО БАНКИРАНЕ"
+                           FontSize="9" CharacterSpacing="0.8"
+                           TextColor="#66FFFFFF"
+                           HorizontalOptions="Center"/>
+                            </VerticalStackLayout>
+                        </Grid>
 
-            </VerticalStackLayout>
-        </ScrollView>
+                        <!-- Floating card — заглавие + форма -->
+                        <Border Grid.Row="1"
+                    BackgroundColor="White"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 28,28,0,0"
+                    Padding="24,32,24,40">
+                            <VerticalStackLayout Spacing="0">
 
-    </Grid>
+                                <Label Text="Добре дошли"
+                           FontSize="24" FontAttributes="Bold"
+                           TextColor="{StaticResource TextPrimary}"
+                           Margin="0,0,0,4"/>
+                                <Label Text="Влезте в акаунта си, за да продължите"
+                           FontSize="13" TextColor="{StaticResource TextMuted}"
+                           Margin="0,0,0,28"/>
+
+                                <Label Text="ПОТРЕБИТЕЛСКО ИМЕ" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}" Margin="0,0,0,16">
+                                    <Entry x:Name="UsernameEntryMobile"
+                               Placeholder="Въведете потребителско име"
+                               PlaceholderColor="{StaticResource TextMuted}"
+                               TextColor="{StaticResource TextPrimary}"
+                               FontSize="14" BackgroundColor="Transparent"
+                               ClearButtonVisibility="WhileEditing"
+                               ReturnType="Next" VerticalOptions="Center"/>
+                                </Border>
+
+                                <Label Text="ПАРОЛА" Style="{StaticResource FieldLabel}"/>
+                                <Border Style="{StaticResource InputBorder}" Margin="0,0,0,8">
+                                    <Entry x:Name="PasswordEntryMobile"
+                               Placeholder="Въведете парола"
+                               PlaceholderColor="{StaticResource TextMuted}"
+                               TextColor="{StaticResource TextPrimary}"
+                               IsPassword="True" FontSize="14"
+                               BackgroundColor="Transparent"
+                               ClearButtonVisibility="WhileEditing"
+                               ReturnType="Done" VerticalOptions="Center"/>
+                                </Border>
+
+                                <Label Text="Забравена парола?"
+                           FontSize="12" FontAttributes="Bold"
+                           TextColor="{StaticResource BrandRed}"
+                           HorizontalOptions="End"
+                           Margin="0,0,0,22"/>
+
+                                <Button Text="Вход в системата"
+                            Style="{StaticResource PrimaryBtn}"
+                            Clicked="OnLoginClicked"/>
+
+                                <Grid ColumnDefinitions="*,Auto,*" Margin="0,22,0,18">
+                                    <BoxView Grid.Column="0" Color="{StaticResource BorderColor}"
+                                 HeightRequest="0.5" VerticalOptions="Center"/>
+                                    <Label Grid.Column="1" Text="или" FontSize="11"
+                               TextColor="{StaticResource TextMuted}" Margin="12,0"/>
+                                    <BoxView Grid.Column="2" Color="{StaticResource BorderColor}"
+                                 HeightRequest="0.5" VerticalOptions="Center"/>
+                                </Grid>
+
+                                <Button Text="Създай нов акаунт"
+                            Style="{StaticResource OutlineBtn}"
+                            Clicked="OnGoToRegisterClicked"/>
+
+                                <Border BackgroundColor="#F8F9FC"
+                            StrokeThickness="0.5"
+                            Stroke="{StaticResource BorderColor}"
+                            StrokeShape="RoundRectangle 8"
+                            Padding="14,11"
+                            Margin="0,20,0,0">
+                                    <HorizontalStackLayout Spacing="9">
+                                        <Path Data="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"
+                                  Fill="{StaticResource SuccessGreen}"
+                                  WidthRequest="16" HeightRequest="16"
+                                  Aspect="Uniform" VerticalOptions="Center"/>
+                                        <Label Text="Връзката е криптирана и защитена"
+                                   FontSize="11" TextColor="{StaticResource TextMuted}"
+                                   VerticalOptions="Center"/>
+                                    </HorizontalStackLayout>
+                                </Border>
+
+                            </VerticalStackLayout>
+                        </Border>
+
+                    </Grid>
+                </ScrollView>
+            </OnIdiom.Phone>
+
+        </OnIdiom>
+    </ContentPage.Content>
+
 </ContentPage>

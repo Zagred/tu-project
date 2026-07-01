@@ -38,6 +38,16 @@ namespace BankWeb.Services
             return await PostJsonForResultAsync<CreateCardRequest, AdminCardDto>("api/admin/cards", request);
         }
 
+        public async Task<(bool Success, string? ErrorMessage)> AddFundsAsync(AdminAddFundsRequest request)
+        {
+            return await PostJsonForOutcomeAsync("api/admin/accounts/add-funds", request);
+        }
+
+        public async Task<(bool Success, string? ErrorMessage)> TransferBetweenAccountsAsync(AdminAccountTransferRequest request)
+        {
+            return await PostJsonForOutcomeAsync("api/admin/accounts/transfer", request);
+        }
+
         public async Task<List<PendingTransferDto>> GetPendingTransfersAsync()
         {
             return await GetListAsync<PendingTransferDto>("api/admin/pending-transfers");

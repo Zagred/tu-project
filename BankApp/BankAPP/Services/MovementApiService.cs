@@ -36,7 +36,7 @@ namespace BankAPP.Services
         {
             var movements = await GetMyMovementsAsync();
             return movements
-                .Where(m => MovementTypes.IsExpense(m.MovementType))
+                .Where(m => m.IsExpense)
                 .Sum(m => m.Amount);
         }
 
@@ -44,7 +44,7 @@ namespace BankAPP.Services
         {
             var movements = await GetMyMovementsAsync();
             return movements
-                .Where(m => MovementTypes.IsIncome(m.MovementType))
+                .Where(m => m.IsIncome)
                 .Sum(m => m.Amount);
         }
 

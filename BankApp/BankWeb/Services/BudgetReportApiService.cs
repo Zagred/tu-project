@@ -12,14 +12,25 @@ namespace BankWeb.Services
 
         public async Task<string> SendMonthlyReportAsync()
         {
-            ApplyToken();
-            var response = await HttpClient.PostAsync("api/BudgetReport/monthly-email", null);
+            try
+            {
+                ApplyToken();
+                var response = await HttpClient.PostAsync("api/BudgetReport/monthly-email", null);
+                var result = await ReadMessageAsync(response);
 
-            var result = await ReadMessageAsync(response);
-            if (response.IsSuccessStatusCode)
-                return result?.Message ?? "Monthly report sent successfully.";
+                if (response.IsSuccessStatusCode)
+                    return result?.Message ?? "Monthly report sent successfully.";
 
-            return result?.Message ?? "Unable to send monthly report.";
+                return result?.Message ?? "Unable to send monthly report.";
+            }
+            catch (HttpRequestException)
+            {
+                return "Unable to send monthly report. The API is not reachable.";
+            }
+            catch (TaskCanceledException)
+            {
+                return "Unable to send monthly report. The request timed out.";
+            }
         }
 
         private static async Task<MessageResponse?> ReadMessageAsync(HttpResponseMessage response)

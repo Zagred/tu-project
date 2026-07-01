@@ -41,7 +41,20 @@ namespace BankShared.Models
         public string MovementTypeDisplay => MovementTypes.GetDisplayName(MovementType);
 
         [NotMapped]
-        public bool IsExpense => MovementTypes.IsExpense(MovementType);
+        public bool IsTransferDebit =>
+            MovementType == MovementTypes.Transfer &&
+            (Description?.StartsWith("Transfer to account", StringComparison.OrdinalIgnoreCase) ?? false);
+
+        [NotMapped]
+        public bool IsTransferCredit =>
+            MovementType == MovementTypes.Transfer &&
+            (Description?.StartsWith("Transfer from account", StringComparison.OrdinalIgnoreCase) ?? false);
+
+        [NotMapped]
+        public bool IsExpense => MovementTypes.IsExpense(MovementType) || IsTransferDebit;
+
+        [NotMapped]
+        public bool IsIncome => !IsExpense;
 
         [NotMapped]
         public string AmountText => (IsExpense ? "-" : "+") + Amount.ToString("F2");

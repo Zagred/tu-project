@@ -13,6 +13,21 @@ namespace BankShared.DTOs
         public string CardType { get; set; } = "Debit";
     }
 
+    public class AdminAddFundsRequest
+    {
+        public int AccountId { get; set; }
+        public decimal Amount { get; set; }
+        public string Description { get; set; } = string.Empty;
+    }
+
+    public class AdminAccountTransferRequest
+    {
+        public int FromAccountId { get; set; }
+        public int ToAccountId { get; set; }
+        public decimal Amount { get; set; }
+        public string Description { get; set; } = string.Empty;
+    }
+
     public class TransferApprovalRequest
     {
         public int MovementId { get; set; }

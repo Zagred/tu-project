@@ -1,5 +1,6 @@
 using BankAPP.Services;
 using BankShared.DTOs;
+using BankShared.Utilities;
 
 namespace BankAPP
 {
@@ -43,14 +44,14 @@ namespace BankAPP
                 return;
             }
 
-            var toIban = ToIbanEntry.Text.Trim();
-            if (string.Equals(toIban, selectedAccount.Iban, StringComparison.OrdinalIgnoreCase))
+            var toIban = BankInputNormalizer.NormalizeIban(ToIbanEntry.Text);
+            if (string.Equals(toIban, BankInputNormalizer.NormalizeIban(selectedAccount.Iban), StringComparison.OrdinalIgnoreCase))
             {
                 await DisplayAlert("Error", "Recipient IBAN cannot be the same as the source account.", "OK");
                 return;
             }
 
-            if (!decimal.TryParse(AmountEntry.Text, out decimal amount) || amount <= 0)
+            if (!BankInputNormalizer.TryParseAmount(AmountEntry.Text, out decimal amount) || amount <= 0)
             {
                 await DisplayAlert("Error", "Invalid amount.", "OK");
                 return;
@@ -77,14 +78,14 @@ namespace BankAPP
                 Description = DescriptionEntry.Text?.Trim() ?? string.Empty
             };
 
-            var success = await _transferApiService.TransferAsync(request);
+            var (success, errorMessage) = await _transferApiService.TransferAsync(request);
             if (!success)
             {
-                await DisplayAlert("Error", "Transfer failed.", "OK");
+                await DisplayAlert("Error", BankInputNormalizer.ToDisplayError(errorMessage), "OK");
                 return;
             }
 
-            await DisplayAlert("Success", "Transfer completed.", "OK");
+            await DisplayAlert("Success", "Transfer submitted for admin approval.", "OK");
             await Navigation.PopAsync();
         }
     }

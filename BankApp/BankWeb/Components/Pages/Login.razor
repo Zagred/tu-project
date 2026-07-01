@@ -2,59 +2,133 @@
 @inject ApiAuthService AuthService
 @inject NavigationManager Navigation
 
-<PageTitle>Login</PageTitle>
+<PageTitle>Login — BankApp</PageTitle>
 
-<section class="auth-panel">
-    <div>
-        <h1>BankWeb</h1>
-        <p class="text-muted">Sign in to manage accounts, transfers, cards and POS activity.</p>
+<div class="login-shell">
+
+    <!-- Лява колона — Branding -->
+    <div class="login-hero">
+        <div class="login-hero-deco deco-1"></div>
+        <div class="login-hero-deco deco-2"></div>
+
+        <div class="login-logo">
+            <div class="login-logo-mark">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                     stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11.5 1L2 6v2h19V6z" />
+                    <line x1="16" y1="10" x2="16" y2="17" />
+                    <line x1="12" y1="10" x2="12" y2="17" />
+                    <line x1="8" y1="10" x2="8" y2="17" />
+                    <line x1="2" y1="19" x2="22" y2="19" />
+                    <line x1="2" y1="22" x2="22" y2="22" />
+                </svg>
+            </div>
+            <div>
+                <div class="login-logo-name">BankApp</div>
+                <div class="login-logo-sub">ДИГИТАЛНО БАНКИРАНЕ</div>
+            </div>
+        </div>
+
+        <h1 class="login-headline">Вашите финанси,<br />на едно място.</h1>
+        <p class="login-subtext">Управлявайте сметките си, правете преводи и следете разходите си бързо и сигурно.</p>
+
+        <ul class="login-features">
+            <li><span class="feat-dot"></span>Мигновени преводи между сметки</li>
+            <li><span class="feat-dot"></span>Пълен преглед на плащания и история</li>
+            <li><span class="feat-dot"></span>Защитено с 256-bit криптиране</li>
+        </ul>
     </div>
 
-    <div class="form-grid">
-        <label>
-            Username
-            <input class="form-control" @bind="username" />
-        </label>
+    <!-- Дясна колона — Форма -->
+    <div class="login-form-panel">
+        <h2 class="login-form-title">Добре дошли</h2>
+        <p class="login-form-sub">Влезте в акаунта си, за да продължите</p>
 
-        <label>
-            Password
-            <input class="form-control" type="password" @bind="password" />
-        </label>
+        <div class="form-group">
+            <label class="field-label">ПОТРЕБИТЕЛСКО ИМЕ</label>
+            <input class="ucb-input" placeholder="Въведете потребителско име"
+                   @bind="username" @bind:event="oninput" />
+        </div>
+
+        <div class="form-group">
+            <label class="field-label">ПАРОЛА</label>
+            <input class="ucb-input" type="password" placeholder="Въведете парола"
+                   @bind="password" @bind:event="oninput"
+                   @onkeydown="HandleKeyDown" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="ucb-alert-danger">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                @errorMessage
+            </div>
+        }
+
+        <button class="btn-ucb-primary" @onclick="HandleLogin" disabled="@isLoading">
+            @if (isLoading)
+            {
+                <span class="btn-spinner"></span>
+                <span>Влизане...</span>
+            }
+            else
+            {
+                <span>Вход в системата</span>
+            }
+        </button>
+
+        <div class="ucb-divider"><span>или</span></div>
+
+        <a class="btn-ucb-outline" href="/register">Създай нов акаунт</a>
+
+        <div class="ucb-security-note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#15803d"
+                 xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+            </svg>
+            Връзката е криптирана и защитена
+        </div>
     </div>
 
-    <div class="actions">
-        <button class="btn btn-primary" type="button" @onclick="HandleLogin">Login</button>
-        <a class="btn btn-outline-secondary" href="/register">Register</a>
-    </div>
-
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <p class="alert alert-danger">@errorMessage</p>
-    }
-</section>
+</div>
 
 @code {
     private string username = "";
     private string password = "";
     private string errorMessage = "";
+    private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
         await AuthService.InitializeAsync();
     }
 
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await HandleLogin();
+    }
+
     private async Task HandleLogin()
     {
         errorMessage = "";
+        isLoading = true;
+        StateHasChanged();
 
         var success = await AuthService.LoginAsync(username, password);
 
+        isLoading = false;
+
         if (!success)
         {
-            errorMessage = "Invalid username or password.";
+            errorMessage = "Грешно потребителско име или парола.";
             return;
         }
 
-        Navigation.NavigateTo("/accounts");
+        Navigation.NavigateTo("/dashboard");
     }
 }

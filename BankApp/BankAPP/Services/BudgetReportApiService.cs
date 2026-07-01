@@ -17,13 +17,24 @@ namespace BankAPP.Services
             if (string.IsNullOrWhiteSpace(SessionManager.Token))
                 return "User is not authenticated.";
 
-            var response = await _httpClient.PostAsync("api/BudgetReport/monthly-email", null);
-            var result = await ReadMessageAsync(response);
+            try
+            {
+                var response = await _httpClient.PostAsync("api/BudgetReport/monthly-email", null);
+                var result = await ReadMessageAsync(response);
 
-            if (response.IsSuccessStatusCode)
-                return result?.Message ?? "Monthly report sent successfully.";
+                if (response.IsSuccessStatusCode)
+                    return result?.Message ?? "Monthly report sent successfully.";
 
-            return result?.Message ?? "Unable to send monthly report.";
+                return result?.Message ?? "Unable to send monthly report.";
+            }
+            catch (HttpRequestException)
+            {
+                return "Unable to send monthly report. The API is not reachable.";
+            }
+            catch (TaskCanceledException)
+            {
+                return "Unable to send monthly report. The request timed out.";
+            }
         }
 
         private static async Task<MessageResponse?> ReadMessageAsync(HttpResponseMessage response)

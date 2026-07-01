@@ -64,6 +64,40 @@ namespace BankAPP.Services
             return await response.Content.ReadFromJsonAsync<AdminCardDto>();
         }
 
+        public async Task<(bool Success, string? ErrorMessage)> AddFundsAsync(AdminAddFundsRequest request)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/admin/accounts/add-funds", request);
+                if (response.IsSuccessStatusCode)
+                    return (true, null);
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return (false, errorContent);
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
+
+        public async Task<(bool Success, string? ErrorMessage)> TransferBetweenAccountsAsync(AdminAccountTransferRequest request)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/admin/accounts/transfer", request);
+                if (response.IsSuccessStatusCode)
+                    return (true, null);
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return (false, errorContent);
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
+
         public async Task<List<PendingTransferDto>> GetPendingTransfersAsync()
         {
             var result = await _httpClient.GetFromJsonAsync<List<PendingTransferDto>>("api/admin/pending-transfers");

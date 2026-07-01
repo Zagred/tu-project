@@ -10,17 +10,26 @@ namespace BankAPP
         public RegisterPage(UserApiService userApiService)
         {
             InitializeComponent();
-            _userApiService = userApiService;
             NavigationPage.SetHasNavigationBar(this, false);
+            _userApiService = userApiService;
         }
+
+        private string Get(Entry desktop, Entry mobile) =>
+            !string.IsNullOrEmpty(desktop?.Text) ? desktop.Text : mobile?.Text ?? string.Empty;
 
         private async void OnRegisterClicked(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(NameEntry.Text) ||
-                string.IsNullOrWhiteSpace(UsernameEntry.Text) ||
-                string.IsNullOrWhiteSpace(EmailEntry.Text) ||
-                string.IsNullOrWhiteSpace(EgnEntry.Text) ||
-                string.IsNullOrWhiteSpace(PasswordEntry.Text))
+            var name = Get(NameEntry, NameEntryMobile);
+            var username = Get(UsernameEntry, UsernameEntryMobile);
+            var email = Get(EmailEntry, EmailEntryMobile);
+            var egn = Get(EgnEntry, EgnEntryMobile);
+            var password = Get(PasswordEntry, PasswordEntryMobile);
+
+            if (string.IsNullOrWhiteSpace(name) ||
+                string.IsNullOrWhiteSpace(username) ||
+                string.IsNullOrWhiteSpace(email) ||
+                string.IsNullOrWhiteSpace(egn) ||
+                string.IsNullOrWhiteSpace(password))
             {
                 await DisplayAlert("Error", "Please fill all fields.", "OK");
                 return;
@@ -28,11 +37,11 @@ namespace BankAPP
 
             var request = new RegisterRequest
             {
-                Name = NameEntry.Text,
-                Username = UsernameEntry.Text,
-                Email = EmailEntry.Text,
-                Egn = EgnEntry.Text,
-                Password = PasswordEntry.Text
+                Name = name,
+                Username = username,
+                Email = email,
+                Egn = egn,
+                Password = password
             };
 
             var success = await _userApiService.RegisterAsync(request);
